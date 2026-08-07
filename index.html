@@ -22,7 +22,7 @@
   <!-- ── Nav ── -->
   <nav class="site-nav">
     <div class="nav-group">
-      <a class="brand" href="/" data-nav="home">Another Artisanal</a>
+      <a href="/" data-nav="home" data-i18n="nav_visuals">Visuals</a>
       <a href="/#shop" data-nav="shop" data-i18n="nav_shop">Shop</a>
       <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
     </div>
@@ -31,7 +31,6 @@
       <a href="/account.html" data-i18n="nav_login">Log in</a>
       <button id="cart-open-btn"><span data-i18n="nav_cart">Cart</span> <span data-bag-count>(0)</span></button>
       <span class="nav-toggle" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></span>
-      <span class="nav-toggle" aria-label="Currency"><button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button></span>
     </div>
   </nav>
 
@@ -57,17 +56,23 @@
     <!-- ── Manifesto ── -->
     <div data-page="manifesto" style="display:none;">
       <div class="manifesto">
-        <div class="manifesto-head">
-          <p class="manifesto-intro" data-i18n="manifesto_intro">Placeholder manifesto intro.</p>
-        </div>
         <div class="principles">
-          <div class="principle"><div class="p-label">A principle 1</div><h2>Every object made to last.</h2></div>
-          <div class="principle"><div class="p-label">A principle 2</div><h2>Materials from Europe and Japan.</h2></div>
-          <div class="principle"><div class="p-label">A principle 3</div><h2>Cut for the body, not the trend.</h2></div>
-          <div class="principle"><div class="p-label">A principle 4</div><h2>Nothing we cannot repair.</h2></div>
-          <div class="principle"><div class="p-label">A principle 5</div><h2>Fewer things, made better.</h2></div>
+          <div class="principle"><h2>An object must be made in-house.</h2><div class="p-label">A principle 1</div></div>
+          <div class="principle"><h2>An object must be biodegradable.</h2><div class="p-label">A principle 2</div></div>
+          <div class="principle"><h2>An object must be designed for disassembly and alterations.</h2><div class="p-label">A principle 3</div></div>
+          <div class="principle"><h2>An object must be designed for steam wash and hand wash.</h2><div class="p-label">A principle 4</div></div>
+          <div class="principle"><h2>Synthetic or semi-synthetic fibers and material are strictly forbidden.</h2><div class="p-label">A principle 5</div></div>
+          <div class="principle"><h2>Exotic leather and fur is strictly prohibited.</h2><div class="p-label">A principle 6</div></div>
+          <div class="principle"><h2>Solid elements must be detachable.</h2><div class="p-label">A principle 7</div></div>
+          <div class="principle"><h2>Hand stitching techniques are preferable.</h2><div class="p-label">A principle 8</div></div>
+          <div class="principle"><h2>Printing techniques should be avoided.</h2><div class="p-label">A principle 9</div></div>
+          <div class="principle"><h2>Production waste must be submitted for recycling.</h2><div class="p-label">A principle 10</div></div>
+          <div class="principle"><h2>A deadstock object must be remanufactured or repurposed for recommerce.</h2><div class="p-label">A principle 11</div></div>
+          <div class="principle"><h2>Recycling and disposal instructions must be clear and visible.</h2><div class="p-label">A principle 12</div></div>
+          <div class="principle"><h2>Branding on the exterior of an object is forbidden.</h2><div class="p-label">A principle 13</div></div>
+          <div class="principle"><h2>A designer, artisans and contributors must remain anonymous.</h2><div class="p-label">A principle 14</div></div>
         </div>
-        <p class="manifesto-close" data-i18n="manifesto_close">Placeholder closing line.</p>
+        <p class="manifesto-close">This manifesto can be implemented to any type of industrial design. Any esthetics and narrative is valid, most of the practices are not.<br/>Created 2019—2023</p>
       </div>
     </div>
 
@@ -126,10 +131,12 @@
   <!-- ── Footer (hidden on visuals + detail) ── -->
   <footer class="site-footer">
     <div class="footer-group">
+      <a href="/contact.html" data-i18n="footer_help">Help</a>
       <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
+      <a href="/legal.html" data-i18n="footer_legal">Legal</a>
       <a href="/#subscribe" data-nav="subscribe" data-i18n="nav_subscribe">Subscribe</a>
-      <a href="/contact.html" data-i18n="footer_contact">Contact</a>
-      <a href="/legal.html" data-i18n="footer_legal">Terms &amp; privacy</a>
+      <a href="https://instagram.com" target="_blank" rel="noopener" data-i18n="footer_instagram">Instagram</a>
+      <a href="https://tiktok.com" target="_blank" rel="noopener" data-i18n="footer_tiktok">TikTok</a>
     </div>
     <div class="footer-group">
       <a href="mailto:hello@anotherartisanal.eu">hello@anotherartisanal.eu</a>

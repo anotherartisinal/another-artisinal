@@ -38,7 +38,7 @@ button { font-family: var(--font); cursor: pointer; }
 
 /* ── NAV ── */
 .site-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60; background: var(--bg);
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
   padding: 18px var(--gutter);
   font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
@@ -50,7 +50,7 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .site-nav .brand { letter-spacing: 0.1em; }
 /* On the visuals/home page the nav floats over photography and inverts. */
-body.nav-blend .site-nav { mix-blend-mode: difference; color: var(--bg); }
+body.nav-blend .site-nav { background: transparent; mix-blend-mode: difference; color: var(--bg); }
 .nav-toggle { display: inline-flex; gap: 6px; }
 .nav-toggle button { color: var(--muted); }
 .nav-toggle button.active { color: inherit; }
@@ -109,11 +109,11 @@ body.hide-footer .site-footer { display: none; }
 .pdp-back { position: fixed; top: 64px; left: var(--gutter); z-index: 50; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; background: none; border: none; }
 
 /* ── MANIFESTO ── */
-.manifesto { padding: 0 var(--gutter) 16vh; }
+.manifesto { padding: 120px var(--gutter) 16vh; }
 .manifesto-head { min-height: 56vh; display: flex; align-items: flex-end; }
 .manifesto-intro { max-width: 640px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); line-height: 1.7; padding-bottom: 8vh; }
 .principles { display: flex; flex-direction: column; gap: 14vh; }
-.principle .p-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+.principle .p-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); text-align: center; margin-top: 28px; }
 .principle h2 { font-size: clamp(40px, 8.4vw, 132px); font-weight: 800; line-height: 0.9; letter-spacing: -0.035em; text-transform: uppercase; text-wrap: balance; }
 .manifesto-close { margin-top: 16vh; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); line-height: 1.7; max-width: 640px; }
 
