@@ -1,155 +1,184 @@
 # CLAUDE.md — Another Artisanal
 
-Guidance for Claude Code working in this repository.
+Handoff + guidance for Claude Code. Read this first when resuming.
 
 ---
 
-## Overview
+## What this is
 
-**Another Artisanal** (anotherartisanal.eu) is an e-commerce site for considered
-**men's apparel** (jackets, trousers, knitwear). It mirrors the backend
-architecture of the sibling `joshua-website` project, adapted for menswear.
+**Another Artisanal** (anotherartisanal.eu) — e-commerce site for considered
+**men's apparel** (jackets, trousers, knitwear). Backend architecture mirrors the
+sibling `joshua-website` project; the front-end is a bespoke **editorial
+smooth-scroll** design (see "Design" below).
 
 - **Stack:** static HTML/CSS/vanilla JS (no framework, no build step) + Netlify
-  Functions + Supabase + Stripe + Resend. Cloudflare for DNS/email.
-- **Hosting:** Netlify, auto-deploys from `main`. No staging — push carefully or
-  use `netlify deploy --alias=preview`.
-- **Ships from:** Poland, worldwide (shipping structure mirrors joshua-website).
+  Functions + Supabase + Stripe + Resend. Cloudflare for DNS (later).
 - **Currencies:** EUR (default) + PLN. **Languages:** EN (canonical) + PL.
-- **Fulfillment note:** DHL/InPost carrier integrations are **not built yet** — no
-  carrier account exists. Checkout charges the correct shipping and records the
-  chosen method; label generation is manual until the shipping functions land
-  (see "Shipping" below).
+- **Fulfillment:** ships from Poland worldwide (shipping *structure* mirrors joshua;
+  carrier label functions not built — no carrier account yet).
+
+## ⚠️ Accounts — use the NEW brand accounts, not personal
+
+Everything is under **new dedicated brand accounts** (brand Gmail
+`anotherartisinal@gmail.com` + its GitHub/Netlify/Supabase), kept separate from
+Josh's personal `joshuamjlong`. **Do NOT use `joshuamjlong` for this project.**
+The machine's `gh` CLI is logged in as the personal account — do not use it here.
+
+## Live / infra
+
+- **Repo:** `github.com/anotherartisinal/another-artisinal` (private, branch `main`).
+- **Live site (Netlify):** https://dancing-froyo-db2962.netlify.app (auto-deploys on
+  push to `main`; project visibility = Public). Builds via `netlify.toml`
+  (`npm install`, publish `.`).
+- **Supabase project ref:** `vtfjbhwibpsowopqailg` (schema/RLS/seed applied + verified).
+- **Custom domain** anotherartisanal.eu — not yet connected (needs Cloudflare DNS).
+
+### Deploy (seamless now)
+The brand PAT is stored in this repo's local `.git/config` remote URL (not committed),
+so **`git push origin main` just works** → Netlify auto-builds (~10–30s). No token or
+`gh` needed. Verify a deploy by polling the live URL for a marker string.
+
+```bash
+git add -A && git commit -m "…" && git push origin main
+```
+
+### Local dev / verify
+```bash
+python3 -m http.server 8099      # static preview (products load from live Supabase)
+netlify dev                      # full preview WITH functions + .env
+```
+Headless render check (products need /products/* rewrite, so use a tiny rewrite server
+for PDP — see git history of this session). Chrome headless:
+`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless --dump-dom URL`.
 
 ---
 
-## Repository layout
+## Repo layout
 
 ```
-index.html          SPA: home + collection grid + product detail + bag (data-page sections)
-checkout.html       dedicated checkout (Stripe Elements)
-account.html        magic-link sign-in + order history + saved address
-admin.html          unlinked admin panel (orders / products / customers)
-contact.html        contact
-legal.html          terms / privacy / returns (placeholder copy)
-config.js           PUBLIC client config (Supabase URL + anon key, Stripe pk) — placeholders
-products.js         Supabase product fetch + stale-while-revalidate cache
-app.js              cart, currency, routing (/products/<slug>), grid/detail/bag rendering
-i18n.js             translations { en, pl } + t()/applyTranslations()
-style.css           neutral menswear styles (restyle via :root variables)
-_headers            security headers + CSP + cache rules
-_redirects          /products/* rewrite + /terms /privacy
-netlify.toml        build config + wsdl bundling + hourly abandoned-cart schedule
-robots.txt          crawler policy
-supabase-schema.sql ONE consolidated migration (tables + RLS + RPCs + seed)
-netlify/functions/  serverless backend (see below)
-.env.example        env var contract (copy to .env for netlify dev; NEVER commit .env)
+index.html      SPA: visuals(home) · shop · manifesto · product detail · bag · subscribe
+checkout.html   Stripe Elements checkout (has the EUR/PLN toggle in its summary)
+account.html    magic-link sign-in + order history + saved address
+admin.html      unlinked admin (orders / products / customers, incl. create/edit/delete)
+contact.html · legal.html    static pages
+config.js       PUBLIC client config: Supabase URL + anon key (set), Stripe pk (placeholder)
+products.js     Supabase fetch + stale-while-revalidate cache (maps JSONB sizes, *_pl)
+app.js          cart, currency, routing (/products/<slug>), all rendering, cart drawer
+scroll.js       Lenis smooth-scroll engine (reduced-motion fallback; window.lenisResize/aaScrollTop)
+i18n.js         translations { en, pl } + t()/applyTranslations()
+style.css       editorial design system (tokens + components + compat aliases)
+fonts/          Bau webfont (woff2): Regular/Italic/Medium/Bold/Super
+images/editorial/  hero-01..03, manifesto (PLACEHOLDER imagery from design hand-off)
+images/AA-*-FRONT.jpg  per-product photos (PLACEHOLDER)
+_headers _redirects netlify.toml robots.txt   config
+supabase-schema.sql   ONE consolidated migration (tables + RLS + RPCs + seed)
+netlify/functions/    serverless backend (see below)
+.env.example    env var contract (never commit .env)
 ```
 
 ### Netlify functions
-- `create-payment-intent.js` — server-trusted pricing (from Supabase), currency-aware
-  `payment_method_types` (PLN → card/blik/p24; EUR → card), shipping recompute.
-- `stripe-webhook.js` — `payment_intent.succeeded` → order `pending→paid`, JSONB stock
-  decrement, Resend buyer + admin emails; idempotency guard; `payment_intent.payment_failed`
-  operator alert (deduped).
-- `magic-link.js` / `send-welcome-email.js` / `account-data.js` — passwordless account.
-- `newsletter-subscribe.js` — newsletter upsert.
-- `abandoned-cart-alert.js` — hourly scheduled operator alert.
-- `admin-auth.js` / `admin-orders.js` / `admin-products.js` / `admin-customers.js` /
-  `admin-utils.js` — admin panel backend (HMAC token, rate limit, timing-safe compares,
-  CORS locked to prod + previews + localhost).
+`create-payment-intent.js` (trusted pricing, currency-aware methods, shipping recompute) ·
+`stripe-webhook.js` (paid flip, JSONB stock decrement, Resend buyer+admin emails,
+idempotency, failed-payment alert) · `magic-link.js` / `send-welcome-email.js` /
+`account-data.js` · `newsletter-subscribe.js` · `abandoned-cart-alert.js` (hourly) ·
+`admin-auth/orders/products/customers.js` + `admin-utils.js` (brand constants + CORS +
+HMAC token). Brand email/legal constants live in `admin-utils.js` and the top of
+`stripe-webhook.js`.
 
 ---
 
-## Data model (Supabase)
+## Design (current — v3 editorial smooth-scroll)
 
-Base tables live **only** in `supabase-schema.sql` (run it once in the SQL Editor).
+Matched to the client's Claude Design screenshots (screenshots are the source of truth
+over the raw bundle).
 
-- **products** — `sizes` is a **JSONB ordered array** `[{"label","stock"}]` (NOT fixed
-  size columns): arbitrary labels per product (EU 46–56 jackets, waist 30–38 pants,
-  S–XL knitwear). Dual price: `price_eur` (cents) + `price_pln` (grosze, nullable →
-  falls back to `price_eur × 4.30`). Dual copy: `*` + `*_pl`. Plus `category`,
-  `has_back`, `extra_count`, `hs_code`, `sort_order`, `active`.
-- **customers / orders / order_items** — RLS locked: anon has NO direct access; guest
-  checkout writes flow through two `SECURITY DEFINER` RPCs (`upsert_pending_customer`,
-  `create_pending_order`) that hard-lock `status='pending'` + `stripe_payment_id=NULL`.
-  Authenticated users read their own rows via four `authenticated` policies (email-bound
-  via `auth.jwt()`). Netlify functions use the service-role key and bypass RLS.
+- **Type:** self-hosted **Bau** (grotesk). Bold caps for nav/labels/product names;
+  **Bau Super** for the huge manifesto type. (Webfont license is the user's to confirm.)
+- **Tokens:** bg `#fbfbfa` · fg `#111111` · muted `#8a8a86` · hairline `#e2e2de` ·
+  image `#f2f2ef`. Radius 0, no shadows. (Old var names like `--ink/--paper/--mid-grey`
+  are aliased in `:root` so earlier pages still style correctly.)
+- **Smooth scroll:** Lenis 1.1.13 from unpkg (`scroll.js`), lerp 0.085, native touch
+  momentum, **reduced-motion → engine off**. Never use CSS `scroll-behavior:smooth`.
+  Call `window.lenisResize()` after layout shifts (routing/accordions/images) — app.js does.
+- **Nav (all pages):** `VISUALS · SHOP · MANIFESTO` / `SUBSCRIBE · LOG IN · CART` + a
+  **PL/EN** toggle only. No brand wordmark, no €/zł in nav. On the visuals page the nav
+  is transparent + `mix-blend-mode:difference` over full-bleed photography; solid `#fbfbfa`
+  elsewhere (`body.nav-blend` toggled by app.js).
+- **Footer:** `HELP · MANIFESTO · LEGAL · SUBSCRIBE · INSTAGRAM · TIKTOK` + email + ©.
+  Hidden on visuals + product detail (`body.hide-footer`).
+- **Surfaces:** Visuals = full-bleed hero image scroll. Shop = edge-to-edge 3-col image
+  grid (collapses 3→2→1). Product = full-bleed image(s) + **overlay info card** (size
+  chips + Size/Description/Tag accordions with `*`⇄`×` markers + "Add to cart — {size}"
+  → "Added" flash). Manifesto = 14 big-type principles, one per screen. Subscribe =
+  newsletter surface.
+- **Cart** = slide-out drawer (+ overlay) opened by the nav Cart button / add-to-cart;
+  mobile sticky bag bar. Bag page for the full view.
+- **Currency** toggle (EUR/PLN) lives in the **checkout** order-summary, not the nav.
+- Mobile-first responsive throughout.
+
+---
+
+## Data model (Supabase) — run `supabase-schema.sql` once
+
+- **products** — `sizes` is a **JSONB ordered array** `[{"label","stock"}]` (arbitrary
+  labels: EU 46–56 jackets, waist 30–38 pants, S–XL knitwear). Dual price
+  `price_eur` (cents) + `price_pln` (grosze, nullable → `price_eur × 4.30`). Dual copy
+  `*` + `*_pl`. Plus `category`, `has_back`, `extra_count`, `hs_code`, `sort_order`, `active`.
+- **customers / orders / order_items** — RLS locked; anon has no table access; guest
+  checkout writes go through 2 `SECURITY DEFINER` RPCs (`upsert_pending_customer`,
+  `create_pending_order`). Auth users read own rows (email-bound). Functions use the
+  service-role key. `decrement_stock(p_id, p_size, p_qty)` decrements the JSONB size.
 - **newsletter_subscribers** — service-role only.
-- **decrement_stock(p_id, p_size, p_qty)** — atomic JSONB stock decrement called by the
-  webhook (matches the size *label*, clamps at 0).
-
-**If you add a client-side write surface, it MUST go through a new SECURITY DEFINER RPC —
-direct REST from anon will 401.**
+- Any new client write MUST go through a new RPC (direct anon REST 401s).
 
 ---
 
-## Key behaviors / gotchas
+## Config / secrets
 
-- **Absolute resource paths everywhere.** The `/products/*` Netlify rewrite serves
-  `index.html` for any `/products/...` URL, so a *relative* `style.css`/`app.js`/`images`
-  reference breaks on direct visits to `/products/<slug>`. Always lead with `/`.
-- **Stripe test↔live pairing.** `config.js` `STRIPE_PUBLISHABLE_KEY` must flip in the
-  SAME commit as the `STRIPE_SECRET_KEY` env var, or Elements 400s.
-- **CSP.** `_headers` carries an enforcing CSP. **Replace `YOUR_SUPABASE_PROJECT_REF`**
-  in `_headers` connect-src with the real Supabase host. Adding any new third-party
-  origin requires editing the CSP first. Any `_headers`/`netlify.toml` change should ship
-  via `netlify deploy --alias=preview` + a checkout smoke test before `main`.
-- **P24 (PLN) is redirect-based** — checkout persists order context to
-  `localStorage['aa-pending-order']` before `confirmPayment` and rehydrates on the
-  redirect-return via `payment_intent_client_secret`. Card + BLIK stay inline.
-- **Pending order is always written EUR** at checkout time (the PLN toggle can change
-  after); the webhook overwrites `orders.total`+`currency` from the authoritative
-  PaymentIntent on the paid flip.
-- **i18n cache.** `_headers` sets `i18n.js` to `no-cache` so new copy keys go live
-  immediately; `style.css`/`app.js` inherit the 24h cache.
-- **Brand constants** (email From, support address, legal entity, logo URL) are
-  centralized in `netlify/functions/admin-utils.js` (imported by the email functions)
-  and in a small block at the top of `stripe-webhook.js` (standalone). Client-side brand
-  text lives in `i18n.js` + the HTML.
+- **`config.js`** (public, committed): `SUPABASE_URL` ✓, `SUPABASE_ANON_KEY` ✓,
+  `STRIPE_PUBLISHABLE_KEY` = **placeholder** (set when Stripe exists; flip in the same
+  commit as the secret key).
+- **Netlify env vars set:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `ADMIN_PASSWORD`, `ADMIN_TOKEN_SECRET`, `ADMIN_NOTIFICATION_EMAIL`, and
+  `SECRETS_SCAN_OMIT_KEYS=SUPABASE_URL` (the public URL legitimately appears in
+  `config.js`/`_headers`, which Netlify's secret scan would otherwise flag).
+- **Not set yet:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`.
+- CSP (`_headers`) allows Supabase (`vtfjbhwibpsowopqailg.supabase.co`), Stripe, unpkg
+  (Lenis), InPost geowidget, OSM tiles. Add any new third-party origin here first.
 
 ---
 
-## Placeholders to replace before launch
+## STATUS — resume here
 
-- `config.js` — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `STRIPE_PUBLISHABLE_KEY`.
-- `_headers` — Supabase host in CSP connect-src.
-- Netlify env vars — see `.env.example` (Supabase service key, Stripe secret + webhook
-  secret, Resend key, admin password/secret). Shipping vars can stay blank until carriers exist.
-- **Brand copy** — tagline, About story, legal pages, product copy/images are placeholders.
-- **Legal entity** — `COMPANY_LEGAL` (in `admin-utils.js` + `stripe-webhook.js`) and the
-  From/support email (`hello@anotherartisanal.eu`) assume a verified Resend domain +
-  registered entity; confirm once incorporated.
-- **Seed catalogue** — `supabase-schema.sql` seeds 6 placeholder SKUs; edit/replace via
-  `/admin.html` (supports create/edit/delete) or re-run with real products.
+**Working & live:** storefront (visuals/shop/product/manifesto/bag/subscribe), Bau type,
+Lenis scroll, EN/PL, cart drawer, admin panel (`/admin.html`, log in with `ADMIN_PASSWORD`),
+newsletter, all Supabase-backed functions, mobile.
 
----
+**Pending / next (nothing blocking):**
+1. **Real photography** — biggest item. Current imagery in `images/editorial/` +
+   `images/AA-*-FRONT.jpg` are PLACEHOLDERS from the design hand-off (extracted from a
+   reference lookbook) — **must be replaced with owned/licensed photos before real launch.**
+   Product images are `/images/<product-id>-FRONT.jpg` (+ `-BACK.jpg`, `-BW1..3.jpg`).
+2. **Real products** — 6 placeholder SKUs seeded (AA-JK-01…AA-TS-01). Edit/replace via
+   `/admin.html` (create/edit/delete) or re-seed.
+3. **Stripe** — no account yet. `create-payment-intent` returns 502 until `STRIPE_SECRET_KEY`
+   is set (SDK throws at init with no key). Then set webhook + flip `config.js` pk.
+4. **Resend** — needs a verified sending domain; account/order emails inactive until
+   `RESEND_API_KEY` set.
+5. **Custom domain** anotherartisanal.eu via Cloudflare (grey-cloud Netlify records).
+6. **PL manifesto** — the 14 principles are English only (brand copy). Translate if wanted.
+7. **Brand/legal copy** — legal.html + About/company/legal-entity are placeholders;
+   `COMPANY_LEGAL` + From email assume a verified domain + registered entity.
+8. **Shipping carrier functions** (InPost/DHL) — not built; checkout charges shipping +
+   records the method; labels are manual until carrier accounts exist. Port from
+   `joshua-website` when ready (schema already has the carrier pointer columns).
 
-## Shipping (not built yet)
-
-Checkout offers country-aware methods and charges correctly:
-- **PL:** InPost / DHL to address — free.
-- **EU-27:** Standard free / Express €20.
-- **Non-EU:** DHL Express — GB €25 · CH/NO €50 · rest €80 (mirrored in `checkout.html`
-  `INTL_PRICE_EUR` and server-side `create-payment-intent.js` `INTL_SHIPPING_CENTS`).
-
-Carrier **label-generation** functions (InPost ShipX, DHL24/Parcel Polska SOAP, DHL
-Express MyDHL) are **not yet ported** — no carrier account exists. Until then, generate
-labels manually. When accounts are ready, port them from `joshua-website` (the schema
-already has the carrier pointer columns + `paczkomat_point`/`dhl24_servicepoint`).
-
----
-
-## Local dev
-
-```bash
-npm install          # only when changing netlify/functions/
-netlify dev          # preview with functions + env vars (needs .env)
-```
-No build step. Static pages can be previewed with any static server, but functions +
-Supabase/Stripe need `netlify dev` + real keys.
+## Gotchas
+- Absolute resource paths only (`/style.css`, `/app.js`, `/images/…`) — the `/products/*`
+  rewrite serves index.html for any such path, so relative paths break on PDP URLs.
+- Stripe test↔live: flip `config.js` pk + `STRIPE_SECRET_KEY` together.
+- `i18n.js` is `no-cache` in `_headers`; `style.css`/`app.js` inherit a 24h cache.
 
 ## Working style
-- Vanilla JS only, no frameworks, no build tooling. Mobile-first CSS.
-- Confirm before large changes. Don't guess on checkout/payment/DB logic.
-- snake_case Supabase columns, camelCase JS, kebab-case CSS.
+Vanilla JS only, no frameworks/build. Mobile-first. Confirm before large changes; don't
+guess on checkout/payment/DB logic. Deploy = commit + `git push origin main`.
