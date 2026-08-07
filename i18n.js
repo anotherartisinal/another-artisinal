@@ -37,6 +37,8 @@ var translations = {
     bag_note: 'Shipping calculated at checkout.',
     bag_checkout: 'Checkout',
     bag_continue: 'Continue shopping',
+    bag_view: 'View bag',
+    bag_added: 'Added to bag',
     // about
     about_heading: 'About',
     about_body: 'Another Artisanal makes considered menswear — jackets, trousers and knitwear built to last, produced in Europe. This is placeholder copy; replace it with the brand story.',
@@ -131,6 +133,8 @@ var translations = {
     bag_note: 'Koszt wysyłki obliczany przy kasie.',
     bag_checkout: 'Do kasy',
     bag_continue: 'Kontynuuj zakupy',
+    bag_view: 'Zobacz koszyk',
+    bag_added: 'Dodano do koszyka',
     about_heading: 'O nas',
     about_body: 'Another Artisanal tworzy przemyślaną modę męską — kurtki, spodnie i dzianiny stworzone, by trwać, produkowane w Europie. To tekst zastępczy; zastąp go historią marki.',
     footer_newsletter: 'Zapisz się',

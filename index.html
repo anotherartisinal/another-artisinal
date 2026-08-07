@@ -21,118 +21,130 @@
 <body>
   <!-- ── Header ── -->
   <header class="site-header">
-    <div class="header-inner">
-      <a class="brand-mark" href="/" data-nav="home">Another Artisanal</a>
-      <nav class="nav">
-        <a href="/#shop" data-nav="home" data-i18n="nav_shop">Shop</a>
-        <a href="/#about" data-nav="about" data-i18n="nav_about">About</a>
-        <a href="/account.html" data-i18n="nav_account">Account</a>
-        <a class="bag-link" href="/#bag" data-nav="bag"><span data-i18n="nav_bag">Bag</span><span data-bag-count></span></a>
-      </nav>
-      <div class="header-tools">
-        <div class="toggle-group" aria-label="Language">
-          <button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button>
-        </div>
-        <div class="toggle-group" aria-label="Currency">
-          <button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button>
-        </div>
-      </div>
-    </div>
+    <a class="brand-mark" href="/" data-nav="home">Another Artisanal</a>
+    <em class="header-tagline">considered menswear</em>
+    <nav class="nav">
+      <a href="/#shop" data-nav="home" data-i18n="nav_shop">Shop</a>
+      <a href="/#about" data-nav="about" data-i18n="nav_about">About</a>
+      <a href="/account.html" data-i18n="nav_account">Account</a>
+      <button class="cart-nav-btn" id="cart-open-btn"><span data-i18n="nav_bag">Bag</span> <span class="cart-count" data-bag-count></span></button>
+      <span class="header-tools">
+        <span class="toggle-group" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></span>
+        <span class="toggle-group" aria-label="Currency"><button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button></span>
+      </span>
+    </nav>
   </header>
 
   <main>
     <!-- ── Home ── -->
     <div data-page="home">
-      <section class="hero wrap">
+      <section class="hero">
         <h1 data-i18n="hero_title">Considered menswear.</h1>
         <p data-i18n="hero_sub">Made to last, made in Europe.</p>
-        <a class="btn" href="/#shop" data-nav="home" data-i18n="hero_cta">View the collection</a>
+        <a class="btn" href="/#shop" data-nav="home" style="display:inline-block;width:auto;padding:14px 40px;" data-i18n="hero_cta">View the collection</a>
       </section>
-      <section class="wrap">
-        <h2 class="section-heading" data-i18n="collection_heading">The collection</h2>
-        <div class="grid" id="product-grid"></div>
-      </section>
+      <div class="section-label" data-i18n="collection_heading">The collection</div>
+      <div class="product-grid" id="product-grid"></div>
     </div>
 
     <!-- ── Product detail ── -->
     <div data-page="detail" id="detail-page" style="display:none;">
-      <div class="wrap detail">
-        <div class="detail-gallery">
-          <div class="detail-main"><img id="detail-main-img" src="" alt="" /></div>
+      <div class="detail-layout">
+        <div class="detail-images">
+          <div class="detail-main-img">
+            <img id="detail-main-img" src="" alt="" />
+            <button class="detail-nav prev" id="detail-prev" aria-label="Previous"></button>
+            <button class="detail-nav next" id="detail-next" aria-label="Next"></button>
+          </div>
           <div class="detail-thumbs" id="detail-thumbs"></div>
         </div>
         <div class="detail-info">
-          <h1 id="detail-name"></h1>
-          <p class="detail-tagline" id="detail-tagline"></p>
+          <h1 class="detail-name" id="detail-name"></h1>
+          <div class="detail-tagline" id="detail-tagline"></div>
           <div class="detail-price" id="detail-price"></div>
 
-          <div class="detail-sizes" id="detail-sizes"></div>
-          <div class="field-error" id="detail-size-error"></div>
-          <button class="btn detail-add" id="detail-add" data-i18n="add_to_bag">Add to bag</button>
+          <div class="size-label" data-i18n="select_size">Select a size</div>
+          <div class="size-options" id="detail-sizes"></div>
+          <div class="size-note field-error" id="detail-size-error"></div>
+          <button class="buy-btn" id="detail-add" data-i18n="add_to_bag">Add to bag</button>
 
           <div class="detail-accordion">
-            <section>
-              <h3 data-i18n="details_heading">Details</h3>
-              <div class="body" id="detail-details"></div>
-            </section>
-            <section>
-              <h3 data-i18n="composition_heading">Composition</h3>
-              <div class="body" id="detail-composition"></div>
-            </section>
-            <section>
-              <h3 data-i18n="care_heading">Care</h3>
-              <div class="body" id="detail-care"></div>
-            </section>
+            <div class="more-details-toggle" data-acc="details"><span data-i18n="details_heading">Details</span><span>+</span></div>
+            <div class="more-details-content" id="detail-details"></div>
+            <div class="more-details-toggle" data-acc="composition"><span data-i18n="composition_heading">Composition</span><span>+</span></div>
+            <div class="more-details-content" id="detail-composition"></div>
+            <div class="more-details-toggle" data-acc="care"><span data-i18n="care_heading">Care</span><span>+</span></div>
+            <div class="more-details-content" id="detail-care"></div>
           </div>
-          <p style="margin-top:24px;"><a class="link-btn" href="/#shop" data-nav="home" data-i18n="back_to_shop">Back to shop</a></p>
+          <button class="back-btn" data-nav="home" data-i18n="back_to_shop">Back to shop</button>
         </div>
       </div>
     </div>
 
     <!-- ── About ── -->
     <div data-page="about" style="display:none;">
-      <div class="wrap static-page">
+      <div class="static-page">
         <h1 data-i18n="about_heading">About</h1>
         <p data-i18n="about_body">Another Artisanal makes considered menswear.</p>
       </div>
     </div>
 
-    <!-- ── Bag ── -->
+    <!-- ── Bag page ── -->
     <div data-page="bag" style="display:none;">
-      <div class="wrap bag">
-        <h1 data-i18n="bag_title">Your bag</h1>
-        <div id="bag-list"></div>
-        <div class="bag-summary">
-          <span data-i18n="bag_subtotal">Subtotal</span>
-          <span id="bag-subtotal-val">€0</span>
+      <div class="bag-page-inner">
+        <div class="bag-page-header">
+          <div class="bag-page-title" data-i18n="bag_title">Your bag</div>
+          <button class="continue-shopping-btn" data-nav="home" data-i18n="bag_continue">Continue shopping</button>
         </div>
-        <div class="bag-note" data-i18n="bag_note">Shipping calculated at checkout.</div>
-        <a class="btn" id="bag-checkout-btn" href="/checkout.html" data-i18n="bag_checkout" style="display:none;">Checkout</a>
+        <div id="bag-list"></div>
+        <div class="bag-summary" id="bag-summary" style="display:none;">
+          <div class="bag-total-row"><span data-i18n="bag_subtotal">Subtotal</span><span id="bag-subtotal-val">€0</span></div>
+          <div class="bag-shipping-note" data-i18n="bag_note">Shipping calculated at checkout.</div>
+          <a class="btn" href="/checkout.html" data-i18n="bag_checkout">Checkout</a>
+        </div>
       </div>
     </div>
   </main>
 
-  <!-- ── Footer ── -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-news">
-        <h3 data-i18n="footer_newsletter">Join the list</h3>
-        <p data-i18n="footer_newsletter_sub">New arrivals and occasional notes. No noise.</p>
-        <form class="news-form" id="newsletter-form">
-          <input type="email" data-i18n-placeholder="footer_email_placeholder" placeholder="Email address" required />
-          <button class="btn" type="submit" data-i18n="footer_subscribe">Subscribe</button>
-        </form>
-        <p class="muted" id="newsletter-status" style="font-size:12px;margin-top:8px;"></p>
-      </div>
-      <div>
-        <div class="footer-links">
-          <a href="/contact.html" data-i18n="footer_contact">Contact</a>
-          <a href="/legal.html" data-i18n="footer_legal">Terms &amp; privacy</a>
-        </div>
-        <p class="footer-legal" style="margin-top:24px;">&copy; Another Artisanal. <span data-i18n="footer_rights">All rights reserved.</span></p>
-      </div>
+  <!-- ── Newsletter + Footer ── -->
+  <section class="newsletter">
+    <h3 data-i18n="footer_newsletter">Join the list</h3>
+    <p data-i18n="footer_newsletter_sub">New arrivals and occasional notes. No noise.</p>
+    <form class="newsletter-form" id="newsletter-form">
+      <input class="newsletter-input" type="email" data-i18n-placeholder="footer_email_placeholder" placeholder="Email address" required />
+      <button class="newsletter-btn" type="submit" data-i18n="footer_subscribe">Subscribe</button>
+    </form>
+    <p class="newsletter-status" id="newsletter-status"></p>
+  </section>
+  <footer>
+    <div class="footer-left">&copy; Another Artisanal</div>
+    <div class="footer-right">
+      <a href="/contact.html" data-i18n="footer_contact">Contact</a>
+      <a href="/legal.html" data-i18n="footer_legal">Terms &amp; privacy</a>
     </div>
   </footer>
+
+  <!-- ── Cart drawer + overlay ── -->
+  <div id="cart-overlay"></div>
+  <aside id="cart-drawer" aria-label="Bag">
+    <div class="cart-drawer-header">
+      <span class="cart-drawer-title" data-i18n="bag_title">Your bag</span>
+      <button class="cart-drawer-close" id="cart-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div id="cart-drawer-items"></div>
+    <div id="cart-drawer-footer">
+      <div class="cart-drawer-total-row"><span data-i18n="bag_subtotal">Subtotal</span><span id="cart-drawer-subtotal">€0</span></div>
+      <div class="cart-shipping-note" data-i18n="bag_note">Shipping calculated at checkout.</div>
+      <a class="buy-btn checkout-btn" href="/checkout.html" data-i18n="bag_checkout">Checkout</a>
+      <button class="view-bag-btn" id="view-bag-btn" data-i18n="bag_view">View bag</button>
+    </div>
+  </aside>
+
+  <!-- ── Sticky bag bar (mobile) ── -->
+  <div id="sticky-bag-bar">
+    <span class="label"><span data-i18n="nav_bag">Bag</span> <span data-bag-count></span></span>
+    <span class="cta" data-i18n="bag_checkout">Checkout</span>
+  </div>
 
   <script src="/i18n.js"></script>
   <script src="/products.js"></script>
