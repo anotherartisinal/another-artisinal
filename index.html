@@ -10,7 +10,7 @@
   <meta property="og:title" content="Another Artisanal" />
   <meta property="og:description" content="Considered menswear, made to last, produced in Europe." />
   <meta property="og:url" content="https://anotherartisanal.eu/" />
-  <meta property="og:image" content="https://anotherartisanal.eu/images/og-card.jpg" />
+  <meta property="og:image" content="https://anotherartisanal.eu/images/editorial/hero-01.jpg" />
   <link rel="alternate" hreflang="en" href="https://anotherartisanal.eu/?lang=en" />
   <link rel="alternate" hreflang="pl" href="https://anotherartisanal.eu/?lang=pl" />
   <link rel="alternate" hreflang="x-default" href="https://anotherartisanal.eu/" />
@@ -19,82 +19,86 @@
   <script src="/config.js"></script>
 </head>
 <body>
-  <!-- ── Header ── -->
-  <header class="site-header">
-    <a class="brand-mark" href="/" data-nav="home">Another Artisanal</a>
-    <em class="header-tagline">considered menswear</em>
-    <nav class="nav">
-      <a href="/#shop" data-nav="home" data-i18n="nav_shop">Shop</a>
-      <a href="/#about" data-nav="about" data-i18n="nav_about">About</a>
-      <a href="/account.html" data-i18n="nav_account">Account</a>
-      <button class="cart-nav-btn" id="cart-open-btn"><span data-i18n="nav_bag">Bag</span> <span class="cart-count" data-bag-count></span></button>
-      <span class="header-tools">
-        <span class="toggle-group" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></span>
-        <span class="toggle-group" aria-label="Currency"><button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button></span>
-      </span>
-    </nav>
-  </header>
+  <!-- ── Nav ── -->
+  <nav class="site-nav">
+    <div class="nav-group">
+      <a class="brand" href="/" data-nav="home">Another Artisanal</a>
+      <a href="/#shop" data-nav="shop" data-i18n="nav_shop">Shop</a>
+      <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
+    </div>
+    <div class="nav-group">
+      <a href="/#subscribe" data-nav="subscribe" data-i18n="nav_subscribe">Subscribe</a>
+      <a href="/account.html" data-i18n="nav_login">Log in</a>
+      <button id="cart-open-btn"><span data-i18n="nav_cart">Cart</span> <span data-bag-count>(0)</span></button>
+      <span class="nav-toggle" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></span>
+      <span class="nav-toggle" aria-label="Currency"><button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button></span>
+    </div>
+  </nav>
 
   <main>
-    <!-- ── Home ── -->
+    <!-- ── Visuals (home) ── -->
     <div data-page="home">
-      <section class="hero">
-        <h1 data-i18n="hero_title">Considered menswear.</h1>
-        <p data-i18n="hero_sub">Made to last, made in Europe.</p>
-        <a class="btn" href="/#shop" data-nav="home" style="display:inline-block;width:auto;padding:14px 40px;" data-i18n="hero_cta">View the collection</a>
-      </section>
-      <div class="section-label" data-i18n="collection_heading">The collection</div>
-      <div class="product-grid" id="product-grid"></div>
+      <div class="hero-stack">
+        <img src="/images/editorial/hero-01.jpg" alt="" />
+        <img src="/images/editorial/hero-02.jpg" alt="" />
+        <img src="/images/editorial/hero-03.jpg" alt="" />
+      </div>
+      <a class="hero-cue" href="/#shop" data-nav="shop" data-i18n="hero_cue">Scroll</a>
+    </div>
+
+    <!-- ── Shop ── -->
+    <div data-page="shop" style="display:none;">
+      <div class="shop">
+        <div class="shop-head"><span data-i18n="collection_heading">The collection</span><span id="shop-count"></span></div>
+        <div class="shop-grid" id="product-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── Manifesto ── -->
+    <div data-page="manifesto" style="display:none;">
+      <div class="manifesto">
+        <div class="manifesto-head">
+          <p class="manifesto-intro" data-i18n="manifesto_intro">Placeholder manifesto intro.</p>
+        </div>
+        <div class="principles">
+          <div class="principle"><div class="p-label">A principle 1</div><h2>Every object made to last.</h2></div>
+          <div class="principle"><div class="p-label">A principle 2</div><h2>Materials from Europe and Japan.</h2></div>
+          <div class="principle"><div class="p-label">A principle 3</div><h2>Cut for the body, not the trend.</h2></div>
+          <div class="principle"><div class="p-label">A principle 4</div><h2>Nothing we cannot repair.</h2></div>
+          <div class="principle"><div class="p-label">A principle 5</div><h2>Fewer things, made better.</h2></div>
+        </div>
+        <p class="manifesto-close" data-i18n="manifesto_close">Placeholder closing line.</p>
+      </div>
     </div>
 
     <!-- ── Product detail ── -->
     <div data-page="detail" id="detail-page" style="display:none;">
-      <div class="detail-layout">
-        <div class="detail-images">
-          <div class="detail-main-img">
-            <img id="detail-main-img" src="" alt="" />
-            <button class="detail-nav prev" id="detail-prev" aria-label="Previous"></button>
-            <button class="detail-nav next" id="detail-next" aria-label="Next"></button>
-          </div>
-          <div class="detail-thumbs" id="detail-thumbs"></div>
+      <button class="pdp-back" data-nav="shop" data-i18n="back_to_shop">Back</button>
+      <div class="pdp-images" id="pdp-images"></div>
+      <div class="pdp-card">
+        <div class="pc-top"><span class="pc-name" id="pdp-name"></span><span class="pc-price" id="pdp-price"></span></div>
+        <div class="acc">
+          <button class="acc-head" data-acc="size"><span data-i18n="pdp_size">Size</span><span class="marker" id="mk-size">*</span></button>
+          <div class="acc-body" id="body-size"><div><div class="acc-inner"><div class="size-chips" id="pdp-sizes"></div><div class="field-error" id="pdp-size-error"></div></div></div></div>
         </div>
-        <div class="detail-info">
-          <h1 class="detail-name" id="detail-name"></h1>
-          <div class="detail-tagline" id="detail-tagline"></div>
-          <div class="detail-price" id="detail-price"></div>
-
-          <div class="size-label" data-i18n="select_size">Select a size</div>
-          <div class="size-options" id="detail-sizes"></div>
-          <div class="size-note field-error" id="detail-size-error"></div>
-          <button class="buy-btn" id="detail-add" data-i18n="add_to_bag">Add to bag</button>
-
-          <div class="detail-accordion">
-            <div class="more-details-toggle" data-acc="details"><span data-i18n="details_heading">Details</span><span>+</span></div>
-            <div class="more-details-content" id="detail-details"></div>
-            <div class="more-details-toggle" data-acc="composition"><span data-i18n="composition_heading">Composition</span><span>+</span></div>
-            <div class="more-details-content" id="detail-composition"></div>
-            <div class="more-details-toggle" data-acc="care"><span data-i18n="care_heading">Care</span><span>+</span></div>
-            <div class="more-details-content" id="detail-care"></div>
-          </div>
-          <button class="back-btn" data-nav="home" data-i18n="back_to_shop">Back to shop</button>
+        <div class="acc">
+          <button class="acc-head" data-acc="description"><span data-i18n="pdp_description">Description</span><span class="marker" id="mk-description">*</span></button>
+          <div class="acc-body" id="body-description"><div><div class="acc-inner" id="pdp-description"></div></div></div>
         </div>
+        <div class="acc">
+          <button class="acc-head" data-acc="tag"><span data-i18n="pdp_tag">Tag</span><span class="marker" id="mk-tag">*</span></button>
+          <div class="acc-body" id="body-tag"><div><div class="acc-inner" id="pdp-tag"></div></div></div>
+        </div>
+        <button class="add-btn" id="pdp-add" data-i18n="add_to_cart">Add to cart</button>
       </div>
     </div>
 
-    <!-- ── About ── -->
-    <div data-page="about" style="display:none;">
-      <div class="static-page">
-        <h1 data-i18n="about_heading">About</h1>
-        <p data-i18n="about_body">Another Artisanal makes considered menswear.</p>
-      </div>
-    </div>
-
-    <!-- ── Bag page ── -->
+    <!-- ── Bag ── -->
     <div data-page="bag" style="display:none;">
-      <div class="bag-page-inner">
+      <div class="bag-page">
         <div class="bag-page-header">
           <div class="bag-page-title" data-i18n="bag_title">Your bag</div>
-          <button class="continue-shopping-btn" data-nav="home" data-i18n="bag_continue">Continue shopping</button>
+          <button class="continue-shopping-btn" data-nav="shop" data-i18n="bag_continue">Continue shopping</button>
         </div>
         <div id="bag-list"></div>
         <div class="bag-summary" id="bag-summary" style="display:none;">
@@ -104,27 +108,36 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Subscribe ── -->
+    <div data-page="subscribe" style="display:none;">
+      <div class="static-page">
+        <h1 data-i18n="subscribe_heading">Subscribe</h1>
+        <p class="muted" data-i18n="subscribe_sub">New arrivals and occasional notes. No noise.</p>
+        <form class="newsletter-form" id="newsletter-form" style="margin:24px 0 0;">
+          <input class="newsletter-input" type="email" data-i18n-placeholder="footer_email_placeholder" placeholder="Email address" required />
+          <button class="newsletter-btn" type="submit" data-i18n="footer_subscribe">Subscribe</button>
+        </form>
+        <p class="newsletter-status" id="newsletter-status"></p>
+      </div>
+    </div>
   </main>
 
-  <!-- ── Newsletter + Footer ── -->
-  <section class="newsletter">
-    <h3 data-i18n="footer_newsletter">Join the list</h3>
-    <p data-i18n="footer_newsletter_sub">New arrivals and occasional notes. No noise.</p>
-    <form class="newsletter-form" id="newsletter-form">
-      <input class="newsletter-input" type="email" data-i18n-placeholder="footer_email_placeholder" placeholder="Email address" required />
-      <button class="newsletter-btn" type="submit" data-i18n="footer_subscribe">Subscribe</button>
-    </form>
-    <p class="newsletter-status" id="newsletter-status"></p>
-  </section>
-  <footer>
-    <div class="footer-left">&copy; Another Artisanal</div>
-    <div class="footer-right">
+  <!-- ── Footer (hidden on visuals + detail) ── -->
+  <footer class="site-footer">
+    <div class="footer-group">
+      <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
+      <a href="/#subscribe" data-nav="subscribe" data-i18n="nav_subscribe">Subscribe</a>
       <a href="/contact.html" data-i18n="footer_contact">Contact</a>
       <a href="/legal.html" data-i18n="footer_legal">Terms &amp; privacy</a>
     </div>
+    <div class="footer-group">
+      <a href="mailto:hello@anotherartisanal.eu">hello@anotherartisanal.eu</a>
+      <span>&copy; Another Artisanal</span>
+    </div>
   </footer>
 
-  <!-- ── Cart drawer + overlay ── -->
+  <!-- ── Cart drawer ── -->
   <div id="cart-overlay"></div>
   <aside id="cart-drawer" aria-label="Bag">
     <div class="cart-drawer-header">
@@ -135,17 +148,19 @@
     <div id="cart-drawer-footer">
       <div class="cart-drawer-total-row"><span data-i18n="bag_subtotal">Subtotal</span><span id="cart-drawer-subtotal">€0</span></div>
       <div class="cart-shipping-note" data-i18n="bag_note">Shipping calculated at checkout.</div>
-      <a class="buy-btn checkout-btn" href="/checkout.html" data-i18n="bag_checkout">Checkout</a>
+      <a class="buy-btn" href="/checkout.html" data-i18n="bag_checkout">Checkout</a>
       <button class="view-bag-btn" id="view-bag-btn" data-i18n="bag_view">View bag</button>
     </div>
   </aside>
 
   <!-- ── Sticky bag bar (mobile) ── -->
   <div id="sticky-bag-bar">
-    <span class="label"><span data-i18n="nav_bag">Bag</span> <span data-bag-count></span></span>
-    <span class="cta" data-i18n="bag_checkout">Checkout</span>
+    <span><span data-i18n="nav_cart">Cart</span> <span data-bag-count>(0)</span></span>
+    <span data-i18n="bag_checkout">Checkout</span>
   </div>
 
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="/scroll.js"></script>
   <script src="/i18n.js"></script>
   <script src="/products.js"></script>
   <script src="/app.js"></script>
