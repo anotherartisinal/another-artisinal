@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account — Another Artisanal</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
+  <style>
+    .account-wrap { max-width: 720px; margin: 0 auto; padding: 40px 0 80px; }
+    .order-card { border: 1px solid var(--line); background: var(--paper); padding: 16px; margin-bottom: 12px; }
+    .order-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .status-pill { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-mark" href="/">Another Artisanal</a>
+      <nav class="nav">
+        <a href="/#shop" data-i18n="nav_shop">Shop</a>
+        <a href="/#about" data-i18n="nav_about">About</a>
+        <a class="bag-link" href="/#bag"><span data-i18n="nav_bag">Bag</span><span data-bag-count></span></a>
+      </nav>
+      <div class="header-tools">
+        <div class="toggle-group"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap account-wrap">
+    <!-- Sign-in -->
+    <div id="signin-view">
+      <h1 style="font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 12px;" data-i18n="account_signin">Sign in</h1>
+      <p class="muted" data-i18n="account_signin_intro">Enter your email and we will send you a sign-in link.</p>
+      <div class="panel" style="margin-top:16px;max-width:420px;">
+        <label class="field"><span data-i18n="checkout_email">Email</span><input type="email" id="signin-email" required /></label>
+        <button class="btn" id="signin-btn" style="width:100%;" data-i18n="account_send_link">Send sign-in link</button>
+        <p class="muted" id="signin-status" style="font-size:13px;margin-top:12px;"></p>
+      </div>
+    </div>
+
+    <!-- Account -->
+    <div id="account-view" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <h1 style="font-family:var(--serif);font-weight:400;font-size:26px;margin:0;" data-i18n="account_title">Account</h1>
+        <button class="link-btn" id="signout-btn" data-i18n="account_signout">Sign out</button>
+      </div>
+      <p class="muted" id="account-email" style="margin-top:4px;"></p>
+
+      <h2 class="section-heading" style="text-align:left;margin:32px 0 12px;" data-i18n="account_orders">Your orders</h2>
+      <div id="orders-list"></div>
+
+      <h2 class="section-heading" style="text-align:left;margin:32px 0 12px;" data-i18n="account_saved_address">Saved address</h2>
+      <div class="panel">
+        <div class="row-2">
+          <label class="field"><span data-i18n="checkout_first_name">First name</span><input type="text" id="a-first" /></label>
+          <label class="field"><span data-i18n="checkout_last_name">Last name</span><input type="text" id="a-last" /></label>
+        </div>
+        <label class="field"><span data-i18n="checkout_address">Address</span><input type="text" id="a-address" /></label>
+        <div class="row-2">
+          <label class="field"><span data-i18n="checkout_city">City</span><input type="text" id="a-city" /></label>
+          <label class="field"><span data-i18n="checkout_postal">Postal code</span><input type="text" id="a-postal" /></label>
+        </div>
+        <label class="field"><span data-i18n="checkout_country">Country</span><input type="text" id="a-country" maxlength="2" /></label>
+        <button class="btn btn-outline" id="save-address-btn" data-i18n="account_save">Save</button>
+        <span class="muted" id="save-status" style="font-size:12px;margin-left:10px;"></span>
+      </div>
+    </div>
+  </main>
+
+  <script src="/i18n.js"></script>
+  <script src="/app.js"></script>
+  <script>
+  (function () {
+    var cfg = window.AA_CONFIG || {};
+    var SESSION_KEY = 'aa-session';
+
+    function saveSession(s) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} }
+    function getSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch (e) { return null; } }
+    function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+
+    // Parse Supabase implicit-flow tokens from the URL hash after a magic link.
+    function captureHashSession() {
+      if (!window.location.hash) return false;
+      var h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      var at = h.get('access_token');
+      if (!at) return false;
+      saveSession({
+        access_token: at,
+        refresh_token: h.get('refresh_token') || '',
+        expires_at: Date.now() + (parseInt(h.get('expires_in'), 10) || 3600) * 1000,
+      });
+      history.replaceState({}, '', '/account.html');
+      return true;
+    }
+
+    async function refreshIfNeeded() {
+      var s = getSession();
+      if (!s) return null;
+      if (Date.now() < s.expires_at - 60000) return s;
+      if (!s.refresh_token) { clearSession(); return null; }
+      try {
+        var res = await fetch(cfg.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': cfg.SUPABASE_ANON_KEY },
+          body: JSON.stringify({ refresh_token: s.refresh_token }),
+        });
+        if (!res.ok) { clearSession(); return null; }
+        var d = await res.json();
+        var ns = { access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Date.now() + (d.expires_in || 3600) * 1000 };
+        saveSession(ns); return ns;
+      } catch (e) { clearSession(); return null; }
+    }
+
+    function authHeaders(s) {
+      return { 'apikey': cfg.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token };
+    }
+
+    function esc(x) { return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function money(total, currency) {
+      var sym = (currency || 'EUR').toUpperCase() === 'PLN' ? ' zł' : '';
+      var pre = sym ? '' : '€';
+      return pre + (Math.round(Number(total) || 0)) + sym;
+    }
+
+    async function loadAccount(s) {
+      // email from the JWT-backed user endpoint
+      try {
+        var ures = await fetch(cfg.SUPABASE_URL + '/auth/v1/user', { headers: authHeaders(s) });
+        if (ures.ok) { var u = await ures.json(); document.getElementById('account-email').textContent = u.email || ''; }
+      } catch (e) {}
+
+      // orders (RLS: own only)
+      try {
+        var ores = await fetch(cfg.SUPABASE_URL + '/rest/v1/orders?select=*,order_items(*)&order=created_at.desc', { headers: authHeaders(s) });
+        var orders = ores.ok ? await ores.json() : [];
+        var list = document.getElementById('orders-list');
+        if (!orders.length) { list.innerHTML = '<p class="muted">' + t('account_no_orders') + '</p>'; }
+        else {
+          list.innerHTML = orders.map(function (o) {
+            var items = (o.order_items || []).map(function (it) {
+              return '<div style="font-size:13px;">' + esc(it.product_name) + (it.size ? ' — ' + esc(it.size) : '') + (it.quantity > 1 ? ' ×' + it.quantity : '') + '</div>';
+            }).join('');
+            var date = (o.created_at || '').slice(0, 10);
+            return '<div class="order-card"><div class="order-head"><span>' + esc(date) + '</span>' +
+              '<span class="status-pill">' + esc(o.status || '') + '</span></div>' + items +
+              '<div style="margin-top:8px;font-size:14px;">' + money(o.total, o.currency) + '</div>' +
+              (o.tracking_number ? '<div class="muted" style="font-size:12px;margin-top:4px;">Tracking: ' + esc(o.tracking_number) + '</div>' : '') +
+              '</div>';
+          }).join('');
+        }
+      } catch (e) { console.error(e); }
+
+      // profile (address/prefs)
+      try {
+        var pres = await fetch('/.netlify/functions/account-data', { headers: authHeaders(s) });
+        if (pres.ok) {
+          var p = await pres.json();
+          if (p.address) {
+            setVal('a-first', p.address.first_name); setVal('a-last', p.address.last_name);
+            setVal('a-address', p.address.address); setVal('a-city', p.address.city);
+            setVal('a-postal', p.address.postal); setVal('a-country', p.address.country);
+          }
+        }
+      } catch (e) {}
+    }
+    function setVal(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
+
+    async function saveAddress(s) {
+      var status = document.getElementById('save-status'); status.textContent = '';
+      var address = {
+        first_name: document.getElementById('a-first').value.trim(),
+        last_name: document.getElementById('a-last').value.trim(),
+        address: document.getElementById('a-address').value.trim(),
+        city: document.getElementById('a-city').value.trim(),
+        postal: document.getElementById('a-postal').value.trim(),
+        country: document.getElementById('a-country').value.trim().toUpperCase(),
+      };
+      try {
+        var res = await fetch('/.netlify/functions/account-data', {
+          method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(s)),
+          body: JSON.stringify({ address: address, addresses: [Object.assign({ id: 'default', label: '' }, address)] }),
+        });
+        status.textContent = res.ok ? t('account_saved') : t('checkout_error_generic');
+      } catch (e) { status.textContent = t('checkout_error_generic'); }
+    }
+
+    function showSignin() {
+      document.getElementById('signin-view').style.display = '';
+      document.getElementById('account-view').style.display = 'none';
+    }
+    function showAccount(s) {
+      document.getElementById('signin-view').style.display = 'none';
+      document.getElementById('account-view').style.display = '';
+      loadAccount(s);
+      document.getElementById('signout-btn').onclick = function () { clearSession(); showSignin(); };
+      document.getElementById('save-address-btn').onclick = function () { saveAddress(s); };
+    }
+
+    async function init() {
+      applyTranslations();
+      captureHashSession();
+      var s = await refreshIfNeeded();
+      if (s) showAccount(s); else showSignin();
+
+      document.getElementById('signin-btn').addEventListener('click', function () {
+        var email = document.getElementById('signin-email').value.trim();
+        var status = document.getElementById('signin-status');
+        if (!email) return;
+        var lang = (typeof getLang === 'function') ? getLang() : 'en';
+        fetch('/.netlify/functions/magic-link', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, lang: lang }),
+        }).then(function () { status.textContent = t('account_link_sent'); })
+          .catch(function () { status.textContent = t('checkout_error_generic'); });
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+  </script>
+</body>
+</html>

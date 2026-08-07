@@ -1,0 +1,48 @@
+# Site-wide security headers. Applied to every path; cache rules below add
+# Cache-Control per pattern (Netlify merges header blocks). HSTS is
+# preload-eligible (2y max-age + includeSubDomains).
+#
+# CSP allowlist covers: Stripe (js/api/hooks/m.stripe.network), InPost
+# Geowidget (both geowidget.inpost.pl and geowidget-app.inpost.pl — the
+# picker iframes from the -app subdomain), Leaflet (unpkg), OpenStreetMap
+# tiles, Google Fonts, Supabase. 'unsafe-inline' is allowed for scripts +
+# styles because every page has inline blocks and style="" attributes.
+#
+# ⚠️ REPLACE the Supabase host below with your project ref before deploy:
+#    connect-src ... https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co
+# Adding any new third-party origin requires editing the CSP first, or the
+# browser blocks it silently. To debug, flip the header name to
+# Content-Security-Policy-Report-Only and watch the console.
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=(self "https://js.stripe.com" "https://hooks.stripe.com")
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://geowidget.inpost.pl https://geowidget-app.inpost.pl https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com https://js.stripe.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://vtfjbhwibpsowopqailg.supabase.co https://api.stripe.com https://m.stripe.network https://geowidget.inpost.pl https://geowidget-app.inpost.pl; frame-src https://js.stripe.com https://hooks.stripe.com https://geowidget.inpost.pl https://geowidget-app.inpost.pl; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+
+# Images — cache for 1 year (immutable; change filename to bust)
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# CSS and JS — cache for 1 day (files can change on deploy)
+/*.css
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/*.js
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# i18n.js changes whenever copy is tweaked — always revalidate so the
+# browser never serves stale strings (raw "checkout_*" keys in the UI).
+/i18n.js
+  Cache-Control: no-cache, must-revalidate
+
+# HTML — always fresh
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

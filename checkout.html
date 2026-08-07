@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Another Artisanal</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    .checkout-grid { display: grid; grid-template-columns: 1fr; gap: 28px; padding: 32px 0 80px; }
+    .summary-item { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; font-size: 13px; border-bottom: 1px solid var(--line); }
+    .summary-line { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .summary-total { font-size: 18px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 14px; }
+    .ship-opt { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); margin-bottom: 8px; cursor: pointer; }
+    .ship-opt.selected { border-color: var(--ink); }
+    .ship-opt .price { margin-left: auto; color: var(--muted); }
+    #payment-section { margin-top: 20px; }
+    #payment-element { margin: 16px 0; }
+    .pay-msg { color: #a23; font-size: 13px; min-height: 18px; margin: 8px 0; }
+    @media (min-width: 861px) {
+      .checkout-grid { grid-template-columns: 1.3fr 1fr; gap: 56px; align-items: start; }
+      .checkout-summary { position: sticky; top: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-mark" href="/">Another Artisanal</a>
+      <nav class="nav"><a href="/#bag" data-i18n="checkout_back_to_bag">Back to bag</a></nav>
+      <div class="header-tools">
+        <div class="toggle-group" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></div>
+        <div class="toggle-group" aria-label="Currency"><button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="empty-msg" style="display:none;padding:80px 0;text-align:center;">
+      <p class="muted" data-i18n="checkout_empty">Your bag is empty.</p>
+      <a class="btn btn-outline" href="/" style="margin-top:16px;" data-i18n="bag_continue">Continue shopping</a>
+    </div>
+
+    <!-- Confirmation (shown after success or P24 redirect return) -->
+    <div id="confirm-msg" style="display:none;padding:80px 0;text-align:center;max-width:520px;margin:0 auto;">
+      <h1 style="font-family:var(--serif);font-weight:400;" data-i18n="checkout_confirm_title">Thank you.</h1>
+      <p class="muted" data-i18n="checkout_confirm_body">Your order is confirmed.</p>
+      <p style="margin-top:20px;">
+        <button class="btn btn-outline" id="invoice-btn" data-i18n="checkout_download_invoice">Download invoice</button>
+      </p>
+      <p style="margin-top:16px;"><a class="link-btn" href="/" data-i18n="bag_continue">Continue shopping</a></p>
+    </div>
+
+    <div class="checkout-grid" id="checkout-grid">
+      <!-- Left: form -->
+      <div>
+        <h1 style="font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 24px;" data-i18n="checkout_title">Checkout</h1>
+
+        <div class="panel" style="margin-bottom:20px;">
+          <h2 class="section-heading" style="text-align:left;margin-bottom:16px;" data-i18n="checkout_your_details">Your details</h2>
+          <label class="field"><span data-i18n="checkout_email">Email</span><input type="email" id="f-email" required /></label>
+          <div class="row-2">
+            <label class="field"><span data-i18n="checkout_first_name">First name</span><input type="text" id="f-first" required /></label>
+            <label class="field"><span data-i18n="checkout_last_name">Last name</span><input type="text" id="f-last" required /></label>
+          </div>
+          <label class="field"><span data-i18n="checkout_country">Country</span>
+            <select id="f-country" required></select>
+          </label>
+          <label class="field"><span data-i18n="checkout_address">Address</span><input type="text" id="f-address" required /></label>
+          <div class="row-2">
+            <label class="field"><span data-i18n="checkout_city">City</span><input type="text" id="f-city" required /></label>
+            <label class="field"><span data-i18n="checkout_postal">Postal code</span><input type="text" id="f-postal" required /></label>
+          </div>
+          <label class="field"><span data-i18n="checkout_phone">Phone</span><input type="tel" id="f-phone" /></label>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="f-ship-diff" />
+            <label for="f-ship-diff" data-i18n="checkout_ship_different">Ship to a different address</label>
+          </div>
+          <div id="recipient-block" style="display:none;">
+            <h2 class="section-heading" style="text-align:left;margin:8px 0 16px;" data-i18n="checkout_recipient_details">Recipient details</h2>
+            <div class="row-2">
+              <label class="field"><span data-i18n="checkout_first_name">First name</span><input type="text" id="r-first" /></label>
+              <label class="field"><span data-i18n="checkout_last_name">Last name</span><input type="text" id="r-last" /></label>
+            </div>
+            <label class="field"><span data-i18n="checkout_country">Country</span><select id="r-country"></select></label>
+            <label class="field"><span data-i18n="checkout_address">Address</span><input type="text" id="r-address" /></label>
+            <div class="row-2">
+              <label class="field"><span data-i18n="checkout_city">City</span><input type="text" id="r-city" /></label>
+              <label class="field"><span data-i18n="checkout_postal">Postal code</span><input type="text" id="r-postal" /></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:20px;">
+          <h2 class="section-heading" style="text-align:left;margin-bottom:16px;" data-i18n="checkout_shipping_method">Shipping</h2>
+          <div id="shipping-options"></div>
+        </div>
+
+        <!-- Payment (revealed after "Continue to payment") -->
+        <div class="panel" id="payment-section" style="display:none;">
+          <h2 class="section-heading" style="text-align:left;margin-bottom:16px;">Payment</h2>
+          <div id="payment-element"></div>
+          <div class="pay-msg" id="pay-msg"></div>
+          <button class="btn" id="pay-btn" style="width:100%;"><span data-i18n="checkout_pay">Pay</span> <span id="pay-amount"></span></button>
+        </div>
+
+        <button class="btn" id="continue-btn" style="width:100%;">
+          <span data-i18n="checkout_pay">Pay</span> <span id="continue-amount"></span>
+        </button>
+        <div class="pay-msg" id="form-msg"></div>
+      </div>
+
+      <!-- Right: summary -->
+      <div class="checkout-summary">
+        <div class="panel">
+          <h2 class="section-heading" style="text-align:left;margin-bottom:16px;" data-i18n="checkout_order_summary">Order summary</h2>
+          <div id="summary-items"></div>
+          <div class="summary-line"><span data-i18n="checkout_subtotal">Subtotal</span><span id="sum-subtotal"></span></div>
+          <div class="summary-line"><span data-i18n="checkout_shipping">Shipping</span><span id="sum-shipping"></span></div>
+          <div class="summary-line summary-total"><span data-i18n="checkout_total">Total</span><span id="sum-total"></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/i18n.js"></script>
+  <script src="/products.js"></script>
+  <script src="/app.js"></script>
+  <script>
+  (function () {
+    var cfg = window.AA_CONFIG || {};
+    var stripe = (window.Stripe && cfg.STRIPE_PUBLISHABLE_KEY) ? Stripe(cfg.STRIPE_PUBLISHABLE_KEY) : null;
+    var elements = null, clientSecret = null, paymentIntentId = null, pendingOrderId = null;
+
+    var EU = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+    var COUNTRIES = [
+      ['PL','Poland'],['DE','Germany'],['FR','France'],['NL','Netherlands'],['BE','Belgium'],['IT','Italy'],['ES','Spain'],
+      ['AT','Austria'],['CZ','Czechia'],['DK','Denmark'],['FI','Finland'],['GR','Greece'],['HU','Hungary'],['IE','Ireland'],
+      ['PT','Portugal'],['RO','Romania'],['SE','Sweden'],['SK','Slovakia'],['SI','Slovenia'],['LT','Lithuania'],['LV','Latvia'],
+      ['EE','Estonia'],['LU','Luxembourg'],['HR','Croatia'],['BG','Bulgaria'],['CY','Cyprus'],['MT','Malta'],
+      ['GB','United Kingdom'],['CH','Switzerland'],['NO','Norway'],['US','United States'],['CA','Canada'],['AU','Australia']
+    ];
+    // Non-EU DHL Express per-country EUR price (mirror of server INTL_SHIPPING_CENTS).
+    var INTL_PRICE_EUR = { GB: 25, CH: 50, NO: 50 };
+    var INTL_DEFAULT_EUR = 80;
+    var PLN_RATE = 4.30;
+
+    function eur(n) { return AA.getCurrency() === 'pln' ? Math.round(n * PLN_RATE) : n; }
+    function money(n) { return AA.formatMoney(n, AA.getCurrency()); }
+
+    // ── shipping options for a country ──
+    function shippingOptionsFor(country) {
+      if (country === 'PL') {
+        return [
+          { id: 'inpost_address', eur: 0 },
+          { id: 'dhl_address', eur: 0 },
+        ];
+      }
+      if (EU.indexOf(country) !== -1) {
+        return [
+          { id: 'eu_standard', eur: 0 },
+          { id: 'eu_express', eur: 20 },
+        ];
+      }
+      var price = INTL_PRICE_EUR[country] != null ? INTL_PRICE_EUR[country] : INTL_DEFAULT_EUR;
+      return [{ id: 'intl_express', eur: price }];
+    }
+
+    var selectedShipping = null;
+
+    function shipCountry() {
+      var diff = document.getElementById('f-ship-diff').checked;
+      return diff ? document.getElementById('r-country').value : document.getElementById('f-country').value;
+    }
+
+    function renderShipping() {
+      var wrap = document.getElementById('shipping-options');
+      var opts = shippingOptionsFor(shipCountry());
+      if (!opts.find(function (o) { return selectedShipping && o.id === selectedShipping.id; })) {
+        selectedShipping = opts[0];
+      }
+      wrap.innerHTML = opts.map(function (o) {
+        var label = t('ship_' + o.id);
+        var price = o.eur === 0 ? t('checkout_free') : money(eur(o.eur));
+        var sel = selectedShipping && selectedShipping.id === o.id;
+        return '<label class="ship-opt' + (sel ? ' selected' : '') + '">' +
+          '<input type="radio" name="ship" value="' + o.id + '"' + (sel ? ' checked' : '') + '/>' +
+          '<span>' + label + '</span><span class="price">' + price + '</span></label>';
+      }).join('');
+      wrap.querySelectorAll('input[name="ship"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          selectedShipping = opts.find(function (o) { return o.id === r.value; });
+          renderShipping(); renderSummary();
+        });
+      });
+    }
+
+    function subtotalEur() {
+      return AA.getCart().reduce(function (s, i) { return s + i.priceNum * (i.qty || 1); }, 0);
+    }
+    function shippingEur() { return selectedShipping ? selectedShipping.eur : 0; }
+    function totalEur() { return subtotalEur() + shippingEur(); }
+
+    function renderSummary() {
+      var cart = AA.getCart();
+      document.getElementById('summary-items').innerHTML = cart.map(function (i) {
+        var line = eur(i.priceNum * (i.qty || 1));
+        return '<div class="summary-item"><span>' + esc(i.name) + ' — ' + t('size_label') + ' ' + esc(i.size) +
+          (i.qty > 1 ? ' ×' + i.qty : '') + '</span><span>' + money(line) + '</span></div>';
+      }).join('');
+      document.getElementById('sum-subtotal').textContent = money(eur(subtotalEur()));
+      document.getElementById('sum-shipping').textContent = shippingEur() === 0 ? t('checkout_free') : money(eur(shippingEur()));
+      document.getElementById('sum-total').textContent = money(eur(totalEur()));
+      var amt = money(eur(totalEur()));
+      document.getElementById('continue-amount').textContent = amt;
+      document.getElementById('pay-amount').textContent = amt;
+    }
+
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function fillCountrySelects() {
+      var opts = COUNTRIES.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
+      document.getElementById('f-country').innerHTML = opts;
+      document.getElementById('r-country').innerHTML = opts;
+    }
+
+    // ── Supabase RPC helper (anon; RLS-safe) ──
+    function rpc(name, args) {
+      return fetch(cfg.SUPABASE_URL + '/rest/v1/rpc/' + name, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': cfg.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + cfg.SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(args),
+      }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error(t); }); return r.json(); });
+    }
+
+    function validate() {
+      var required = ['f-email','f-first','f-last','f-country','f-address','f-city','f-postal'];
+      for (var i = 0; i < required.length; i++) {
+        var el = document.getElementById(required[i]);
+        if (!el.value.trim()) { el.focus(); return false; }
+      }
+      return true;
+    }
+
+    // ── Step 1: create pending order + PI, mount Elements ──
+    async function continueToPayment() {
+      var msg = document.getElementById('form-msg');
+      msg.textContent = '';
+      if (!validate()) { msg.textContent = t('checkout_error_generic'); return; }
+      if (!stripe) { msg.textContent = 'Stripe key not configured.'; return; }
+
+      var btn = document.getElementById('continue-btn');
+      btn.disabled = true; btn.textContent = t('checkout_pay_processing');
+
+      try {
+        var cart = AA.getCart();
+        var diff = document.getElementById('f-ship-diff').checked;
+        var buyerName = document.getElementById('f-first').value.trim() + ' ' + document.getElementById('f-last').value.trim();
+        var email = document.getElementById('f-email').value.trim();
+        var billCountry = document.getElementById('f-country').value;
+        var shipName = diff
+          ? (document.getElementById('r-first').value.trim() + ' ' + document.getElementById('r-last').value.trim())
+          : buyerName;
+        var shipC = diff ? document.getElementById('r-country').value : billCountry;
+
+        // upsert customer
+        var customerId = await rpc('upsert_pending_customer', {
+          p_email: email, p_name: buyerName, p_country: billCountry,
+        });
+
+        // create pending order (always EUR at checkout time; webhook overwrites on paid)
+        var items = cart.map(function (i) {
+          return { product_id: i.id, product_name: i.name, size: i.size, quantity: i.qty || 1, price: i.priceNum };
+        });
+        pendingOrderId = await rpc('create_pending_order', {
+          p_customer_id: customerId,
+          p_total: totalEur(),
+          p_currency: 'EUR',
+          p_locale: (typeof getLang === 'function' ? getLang() : 'en'),
+          p_billing_name: buyerName,
+          p_billing_address: document.getElementById('f-address').value.trim(),
+          p_billing_city: document.getElementById('f-city').value.trim(),
+          p_billing_country: billCountry,
+          p_billing_postal: document.getElementById('f-postal').value.trim(),
+          p_shipping_name: shipName,
+          p_shipping_address: diff ? document.getElementById('r-address').value.trim() : document.getElementById('f-address').value.trim(),
+          p_shipping_city: diff ? document.getElementById('r-city').value.trim() : document.getElementById('f-city').value.trim(),
+          p_shipping_country: shipC,
+          p_shipping_postal: diff ? document.getElementById('r-postal').value.trim() : document.getElementById('f-postal').value.trim(),
+          p_shipping_phone: document.getElementById('f-phone').value.trim(),
+          p_shipping_email: email,
+          p_shipping_method: selectedShipping.id,
+          p_paczkomat_point: null,
+          p_dhl24_servicepoint: null,
+          p_items: items,
+        });
+
+        // create payment intent
+        var piRes = await fetch('/.netlify/functions/create-payment-intent', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: cart.map(function (i) { return { id: i.id, name: i.name, size: i.size, quantity: i.qty || 1 }; }),
+            shipping: { id: selectedShipping.id },
+            currency: AA.getCurrency(),
+            customerEmail: email,
+            customerName: buyerName,
+            shippingAddress: document.getElementById('f-address').value.trim(),
+            shippingCountry: shipC,
+            pendingOrderId: pendingOrderId,
+          }),
+        });
+        var piData = await piRes.json();
+        if (!piRes.ok || !piData.clientSecret) throw new Error(piData.error || 'PI failed');
+        clientSecret = piData.clientSecret;
+        paymentIntentId = piData.paymentIntentId;
+
+        // persist context for the P24 redirect return
+        try {
+          localStorage.setItem('aa-pending-order', JSON.stringify({ pendingOrderId: pendingOrderId, paymentIntentId: paymentIntentId }));
+        } catch (e) {}
+
+        // mount Elements
+        elements = stripe.elements({ clientSecret: clientSecret, appearance: { theme: 'flat' } });
+        var pe = elements.create('payment', {
+          defaultValues: { billingDetails: { name: buyerName, email: email } },
+        });
+        pe.mount('#payment-element');
+
+        document.getElementById('payment-section').style.display = '';
+        btn.style.display = 'none';
+        document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        msg.textContent = t('checkout_error_generic');
+        btn.disabled = false;
+        btn.innerHTML = '<span>' + t('checkout_pay') + '</span> ' + money(eur(totalEur()));
+      }
+    }
+
+    // ── Step 2: confirm payment ──
+    async function pay() {
+      var payMsg = document.getElementById('pay-msg');
+      payMsg.textContent = '';
+      var btn = document.getElementById('pay-btn');
+      btn.disabled = true; btn.textContent = t('checkout_pay_processing');
+      var result = await stripe.confirmPayment({
+        elements: elements,
+        confirmParams: { return_url: window.location.origin + '/checkout.html' },
+        redirect: 'if_required',
+      });
+      if (result.error) {
+        payMsg.textContent = result.error.message || t('checkout_error_generic');
+        btn.disabled = false;
+        btn.innerHTML = '<span>' + t('checkout_pay') + '</span> ' + money(eur(totalEur()));
+        return;
+      }
+      // card / BLIK complete inline (no redirect)
+      onSuccess();
+    }
+
+    function onSuccess() {
+      try { localStorage.removeItem('aa-cart'); } catch (e) {}
+      document.getElementById('checkout-grid').style.display = 'none';
+      document.getElementById('confirm-msg').style.display = '';
+      window.scrollTo(0, 0);
+    }
+
+    // ── P24 redirect return ──
+    function handleRedirectReturn() {
+      var params = new URLSearchParams(window.location.search);
+      var cs = params.get('payment_intent_client_secret');
+      if (!cs || !stripe) return false;
+      stripe.retrievePaymentIntent(cs).then(function (res) {
+        var pi = res.paymentIntent;
+        if (pi && (pi.status === 'succeeded' || pi.status === 'processing')) {
+          onSuccess();
+        }
+      });
+      return true;
+    }
+
+    // ── init ──
+    function init() {
+      applyTranslations();
+      fillCountrySelects();
+
+      if (handleRedirectReturn()) return;
+
+      if (!AA.getCart().length) {
+        document.getElementById('checkout-grid').style.display = 'none';
+        document.getElementById('empty-msg').style.display = '';
+        return;
+      }
+
+      renderShipping();
+      renderSummary();
+
+      document.getElementById('f-country').addEventListener('change', function () { renderShipping(); renderSummary(); });
+      document.getElementById('r-country').addEventListener('change', function () { renderShipping(); renderSummary(); });
+      document.getElementById('f-ship-diff').addEventListener('change', function () {
+        document.getElementById('recipient-block').style.display = this.checked ? '' : 'none';
+        renderShipping(); renderSummary();
+      });
+
+      document.getElementById('continue-btn').addEventListener('click', continueToPayment);
+      document.getElementById('pay-btn').addEventListener('click', pay);
+      document.getElementById('invoice-btn').addEventListener('click', function () { window.print(); });
+
+      // currency toggle rebuilds pricing (must re-create PI, so reset payment step)
+      document.addEventListener('currencychange', function () {
+        clientSecret = null; elements = null;
+        document.getElementById('payment-section').style.display = 'none';
+        var cb = document.getElementById('continue-btn');
+        cb.style.display = ''; cb.disabled = false;
+        renderShipping(); renderSummary();
+      });
+      document.addEventListener('langchange', function () { renderShipping(); renderSummary(); });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+User-agent: *
+Allow: /
+Disallow: /checkout.html
+Disallow: /account.html
+Disallow: /admin.html
+Disallow: /.netlify/
+
+# Explicit allow for major search + AI crawlers (they already fall under
+# User-agent: * — listing them documents the policy).
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://anotherartisanal.eu/sitemap.xml

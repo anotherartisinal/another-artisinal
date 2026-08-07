@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Another Artisanal — Considered menswear</title>
+  <meta name="description" content="Another Artisanal — considered menswear. Jackets, trousers and knitwear made to last, produced in Europe." />
+  <link rel="canonical" href="https://anotherartisanal.eu/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Another Artisanal" />
+  <meta property="og:description" content="Considered menswear, made to last, produced in Europe." />
+  <meta property="og:url" content="https://anotherartisanal.eu/" />
+  <meta property="og:image" content="https://anotherartisanal.eu/images/og-card.jpg" />
+  <link rel="alternate" hreflang="en" href="https://anotherartisanal.eu/?lang=en" />
+  <link rel="alternate" hreflang="pl" href="https://anotherartisanal.eu/?lang=pl" />
+  <link rel="alternate" hreflang="x-default" href="https://anotherartisanal.eu/" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-mark" href="/" data-nav="home">Another Artisanal</a>
+      <nav class="nav">
+        <a href="/#shop" data-nav="home" data-i18n="nav_shop">Shop</a>
+        <a href="/#about" data-nav="about" data-i18n="nav_about">About</a>
+        <a href="/account.html" data-i18n="nav_account">Account</a>
+        <a class="bag-link" href="/#bag" data-nav="bag"><span data-i18n="nav_bag">Bag</span><span data-bag-count></span></a>
+      </nav>
+      <div class="header-tools">
+        <div class="toggle-group" aria-label="Language">
+          <button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button>
+        </div>
+        <div class="toggle-group" aria-label="Currency">
+          <button data-currency-btn="eur">€</button><button data-currency-btn="pln">zł</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── Home ── -->
+    <div data-page="home">
+      <section class="hero wrap">
+        <h1 data-i18n="hero_title">Considered menswear.</h1>
+        <p data-i18n="hero_sub">Made to last, made in Europe.</p>
+        <a class="btn" href="/#shop" data-nav="home" data-i18n="hero_cta">View the collection</a>
+      </section>
+      <section class="wrap">
+        <h2 class="section-heading" data-i18n="collection_heading">The collection</h2>
+        <div class="grid" id="product-grid"></div>
+      </section>
+    </div>
+
+    <!-- ── Product detail ── -->
+    <div data-page="detail" id="detail-page" style="display:none;">
+      <div class="wrap detail">
+        <div class="detail-gallery">
+          <div class="detail-main"><img id="detail-main-img" src="" alt="" /></div>
+          <div class="detail-thumbs" id="detail-thumbs"></div>
+        </div>
+        <div class="detail-info">
+          <h1 id="detail-name"></h1>
+          <p class="detail-tagline" id="detail-tagline"></p>
+          <div class="detail-price" id="detail-price"></div>
+
+          <div class="detail-sizes" id="detail-sizes"></div>
+          <div class="field-error" id="detail-size-error"></div>
+          <button class="btn detail-add" id="detail-add" data-i18n="add_to_bag">Add to bag</button>
+
+          <div class="detail-accordion">
+            <section>
+              <h3 data-i18n="details_heading">Details</h3>
+              <div class="body" id="detail-details"></div>
+            </section>
+            <section>
+              <h3 data-i18n="composition_heading">Composition</h3>
+              <div class="body" id="detail-composition"></div>
+            </section>
+            <section>
+              <h3 data-i18n="care_heading">Care</h3>
+              <div class="body" id="detail-care"></div>
+            </section>
+          </div>
+          <p style="margin-top:24px;"><a class="link-btn" href="/#shop" data-nav="home" data-i18n="back_to_shop">Back to shop</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── About ── -->
+    <div data-page="about" style="display:none;">
+      <div class="wrap static-page">
+        <h1 data-i18n="about_heading">About</h1>
+        <p data-i18n="about_body">Another Artisanal makes considered menswear.</p>
+      </div>
+    </div>
+
+    <!-- ── Bag ── -->
+    <div data-page="bag" style="display:none;">
+      <div class="wrap bag">
+        <h1 data-i18n="bag_title">Your bag</h1>
+        <div id="bag-list"></div>
+        <div class="bag-summary">
+          <span data-i18n="bag_subtotal">Subtotal</span>
+          <span id="bag-subtotal-val">€0</span>
+        </div>
+        <div class="bag-note" data-i18n="bag_note">Shipping calculated at checkout.</div>
+        <a class="btn" id="bag-checkout-btn" href="/checkout.html" data-i18n="bag_checkout" style="display:none;">Checkout</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-news">
+        <h3 data-i18n="footer_newsletter">Join the list</h3>
+        <p data-i18n="footer_newsletter_sub">New arrivals and occasional notes. No noise.</p>
+        <form class="news-form" id="newsletter-form">
+          <input type="email" data-i18n-placeholder="footer_email_placeholder" placeholder="Email address" required />
+          <button class="btn" type="submit" data-i18n="footer_subscribe">Subscribe</button>
+        </form>
+        <p class="muted" id="newsletter-status" style="font-size:12px;margin-top:8px;"></p>
+      </div>
+      <div>
+        <div class="footer-links">
+          <a href="/contact.html" data-i18n="footer_contact">Contact</a>
+          <a href="/legal.html" data-i18n="footer_legal">Terms &amp; privacy</a>
+        </div>
+        <p class="footer-legal" style="margin-top:24px;">&copy; Another Artisanal. <span data-i18n="footer_rights">All rights reserved.</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/i18n.js"></script>
+  <script src="/products.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

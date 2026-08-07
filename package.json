@@ -1,0 +1,11 @@
+{
+  "name": "another-artisanal",
+  "version": "1.0.0",
+  "description": "Another Artisanal — e-commerce site (static HTML/CSS/JS + Netlify Functions + Supabase + Stripe).",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "soap": "^1.9.1",
+    "stripe": "20.4.0"
+  }
+}

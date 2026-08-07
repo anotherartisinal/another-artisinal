@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Another Artisanal</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 0 80px; }
+    .tabs { display: flex; gap: 8px; margin: 24px 0; border-bottom: 1px solid var(--line); }
+    .tab { background: none; border: none; padding: 10px 14px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .tbl th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .scroll-x { overflow-x: auto; }
+    .editor { background: var(--paper); border: 1px solid var(--line); padding: 16px; margin: 8px 0 20px; }
+    .editor .row-2 { margin-bottom: 10px; }
+    textarea { width: 100%; min-height: 70px; padding: 10px; border: 1px solid var(--line); font-family: monospace; font-size: 12px; }
+    .mini { font-size: 12px; padding: 6px 10px; }
+    .danger { color: #a23; }
+    input.cell, select.cell { padding: 6px 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main class="wrap admin-wrap">
+    <!-- Login -->
+    <div id="login-view">
+      <h1 style="font-family:var(--serif);font-weight:400;">Admin</h1>
+      <div class="panel" style="max-width:360px;margin-top:16px;">
+        <label class="field"><span>Password</span><input type="password" id="admin-pw" /></label>
+        <button class="btn" id="login-btn" style="width:100%;">Sign in</button>
+        <p class="muted danger" id="login-msg" style="font-size:13px;margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <!-- Panel -->
+    <div id="panel-view" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <h1 style="font-family:var(--serif);font-weight:400;margin:0;">Admin</h1>
+        <button class="link-btn" id="logout-btn">Sign out</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="orders">Orders</button>
+        <button class="tab" data-tab="products">Products</button>
+        <button class="tab" data-tab="customers">Customers</button>
+      </div>
+
+      <div data-tabpane="orders"></div>
+      <div data-tabpane="products" style="display:none;"></div>
+      <div data-tabpane="customers" style="display:none;"></div>
+    </div>
+  </main>
+
+  <script src="/config.js"></script>
+  <script>
+  (function () {
+    var cfg = window.AA_CONFIG || {};
+    var TOKEN_KEY = 'aa-admin-token';
+    function getToken() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
+    function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+    function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+
+    function api(path, opts) {
+      opts = opts || {};
+      opts.headers = Object.assign({ 'Authorization': 'Bearer ' + getToken() }, opts.headers || {});
+      return fetch('/.netlify/functions/' + path, opts);
+    }
+    function esc(x) { return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function money(total, currency) {
+      var pln = (currency || 'EUR').toUpperCase() === 'PLN';
+      return (pln ? '' : '€') + (Math.round(Number(total) || 0)) + (pln ? ' zł' : '');
+    }
+
+    // ── auth ──
+    function showLogin() { document.getElementById('login-view').style.display = ''; document.getElementById('panel-view').style.display = 'none'; }
+    function showPanel() { document.getElementById('login-view').style.display = 'none'; document.getElementById('panel-view').style.display = ''; loadOrders(); }
+
+    async function verify() {
+      if (!getToken()) return showLogin();
+      var res = await api('admin-auth', { method: 'GET' });
+      if (res.ok) showPanel(); else { clearToken(); showLogin(); }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', async function () {
+      var pw = document.getElementById('admin-pw').value;
+      var msg = document.getElementById('login-msg'); msg.textContent = '';
+      try {
+        var res = await fetch('/.netlify/functions/admin-auth', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw }),
+        });
+        var d = await res.json();
+        if (res.ok && d.token) { setToken(d.token); showPanel(); }
+        else msg.textContent = d.error || 'Login failed';
+      } catch (e) { msg.textContent = 'Login failed'; }
+    });
+    document.getElementById('logout-btn').addEventListener('click', function () { clearToken(); showLogin(); });
+
+    // ── tabs ──
+    document.querySelectorAll('.tab').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        var tab = b.getAttribute('data-tab');
+        document.querySelectorAll('[data-tabpane]').forEach(function (p) {
+          p.style.display = p.getAttribute('data-tabpane') === tab ? '' : 'none';
+        });
+        if (tab === 'orders') loadOrders();
+        if (tab === 'products') loadProductsAdmin();
+        if (tab === 'customers') loadCustomers();
+      });
+    });
+
+    // ── Orders ──
+    var STATUSES = ['pending', 'paid', 'confirmed', 'shipped', 'delivered'];
+    async function loadOrders() {
+      var pane = document.querySelector('[data-tabpane="orders"]');
+      pane.innerHTML = '<p class="muted">Loading…</p>';
+      var res = await api('admin-orders?limit=100');
+      if (!res.ok) { pane.innerHTML = '<p class="danger">Failed to load orders.</p>'; return; }
+      var d = await res.json();
+      var orders = d.orders || [];
+      if (!orders.length) { pane.innerHTML = '<p class="muted">No orders yet.</p>'; return; }
+      pane.innerHTML = '<div class="scroll-x"><table class="tbl"><thead><tr>' +
+        '<th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Tracking</th><th></th></tr></thead><tbody>' +
+        orders.map(function (o) {
+          var cust = o.customers || {};
+          var items = (o.order_items || []).map(function (it) { return esc(it.product_name) + (it.size ? ' (' + esc(it.size) + ')' : '') + (it.quantity > 1 ? ' ×' + it.quantity : ''); }).join('<br/>');
+          return '<tr data-oid="' + o.id + '">' +
+            '<td>' + esc((o.created_at || '').slice(0, 10)) + '</td>' +
+            '<td>' + esc(cust.name || o.billing_name || '') + '<br/><span class="muted">' + esc(cust.email || '') + '</span><br/><span class="muted">' + esc(o.shipping_country || '') + ' · ' + esc(o.shipping_method || '') + '</span></td>' +
+            '<td>' + items + '</td>' +
+            '<td>' + money(o.total, o.currency) + '</td>' +
+            '<td><select class="cell o-status">' + STATUSES.map(function (s) { return '<option' + (s === o.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></td>' +
+            '<td><input class="cell o-tracking" value="' + esc(o.tracking_number || '') + '" style="width:130px;"/></td>' +
+            '<td><button class="btn btn-outline mini o-save">Save</button>' + (o.status === 'pending' ? ' <button class="link-btn danger o-del">Delete</button>' : '') + '</td>' +
+            '</tr>';
+        }).join('') + '</tbody></table></div>';
+
+      pane.querySelectorAll('tr[data-oid]').forEach(function (row) {
+        var id = row.getAttribute('data-oid');
+        row.querySelector('.o-save').addEventListener('click', async function () {
+          var status = row.querySelector('.o-status').value;
+          var tracking = row.querySelector('.o-tracking').value;
+          var r = await api('admin-orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, status: status, tracking_number: tracking }) });
+          if (r.ok) loadOrders(); else alert('Save failed');
+        });
+        var del = row.querySelector('.o-del');
+        if (del) del.addEventListener('click', async function () {
+          if (!confirm('Delete this pending order?')) return;
+          var r = await api('admin-orders?id=' + id, { method: 'DELETE' });
+          if (r.ok) loadOrders(); else alert('Delete failed');
+        });
+      });
+    }
+
+    // ── Products ──
+    async function loadProductsAdmin() {
+      var pane = document.querySelector('[data-tabpane="products"]');
+      pane.innerHTML = '<p class="muted">Loading…</p>';
+      var res = await api('admin-products');
+      if (!res.ok) { pane.innerHTML = '<p class="danger">Failed to load products.</p>'; return; }
+      var products = await res.json();
+      pane.innerHTML =
+        '<button class="btn mini" id="new-product-btn" style="margin-bottom:16px;">+ New product</button>' +
+        '<div id="new-product-editor"></div>' +
+        products.map(function (p) { return productRow(p); }).join('');
+
+      pane.querySelectorAll('[data-pid]').forEach(function (row) {
+        var id = row.getAttribute('data-pid');
+        row.querySelector('.p-edit').addEventListener('click', function () {
+          var box = row.querySelector('.p-editor-box');
+          box.innerHTML = box.innerHTML ? '' : '';
+          if (box.getAttribute('data-open') === '1') { box.innerHTML = ''; box.setAttribute('data-open', '0'); return; }
+          box.innerHTML = productEditor(JSON.parse(row.getAttribute('data-json')), false);
+          box.setAttribute('data-open', '1');
+          wireEditor(box, false, id);
+        });
+        row.querySelector('.p-del').addEventListener('click', async function () {
+          if (!confirm('Delete product ' + id + '?')) return;
+          var r = await api('admin-products?id=' + encodeURIComponent(id), { method: 'DELETE' });
+          if (r.ok) loadProductsAdmin(); else alert('Delete failed');
+        });
+      });
+
+      document.getElementById('new-product-btn').addEventListener('click', function () {
+        var box = document.getElementById('new-product-editor');
+        box.innerHTML = box.innerHTML ? '' : productEditor({ sizes: [] }, true);
+        if (box.innerHTML) wireEditor(box, true, null);
+      });
+    }
+
+    function productRow(p) {
+      var stock = (p.sizes || []).map(function (s) { return s.label + ':' + s.stock; }).join('  ');
+      return '<div class="editor" data-pid="' + esc(p.id) + '" data-json="' + esc(JSON.stringify(p)) + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
+        '<div><strong>' + esc(p.name) + '</strong> <span class="muted">' + esc(p.id) + ' · ' + esc(p.category || '') + '</span><br/>' +
+        '<span class="muted" style="font-size:12px;">€' + (p.price_eur / 100) + (p.price_pln ? ' · ' + (p.price_pln / 100) + ' zł' : '') + ' · ' + esc(stock) + (p.active === false ? ' · INACTIVE' : '') + '</span></div>' +
+        '<div><button class="btn btn-outline mini p-edit">Edit</button> <button class="link-btn danger p-del">Delete</button></div>' +
+        '</div><div class="p-editor-box" data-open="0"></div></div>';
+    }
+
+    function fieldRow(label, id, val, ph) {
+      return '<label class="field"><span>' + label + '</span><input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '/></label>';
+    }
+
+    function productEditor(p, isNew) {
+      var sizesJson = JSON.stringify(p.sizes || [], null, 0);
+      return '<div style="margin-top:14px;">' +
+        (isNew ? fieldRow('ID (SKU)', 'e-id', '', 'AA-JK-03') : '') +
+        fieldRow('Slug', 'e-slug', p.slug) +
+        '<div class="row-2">' + fieldRow('Name (EN)', 'e-name', p.name) + fieldRow('Name (PL)', 'e-name_pl', p.name_pl) + '</div>' +
+        '<div class="row-2">' + fieldRow('Tagline (EN)', 'e-tagline', p.tagline) + fieldRow('Tagline (PL)', 'e-tagline_pl', p.tagline_pl) + '</div>' +
+        '<div class="row-2">' + fieldRow('Price EUR (cents)', 'e-price_eur', p.price_eur) + fieldRow('Price PLN (grosze)', 'e-price_pln', p.price_pln) + '</div>' +
+        '<div class="row-2">' + fieldRow('Category', 'e-category', p.category) + fieldRow('HS code', 'e-hs_code', p.hs_code) + '</div>' +
+        '<label class="field"><span>Sizes (JSON: [{"label","stock"}])</span><textarea id="e-sizes">' + esc(sizesJson) + '</textarea></label>' +
+        '<div class="row-2">' + fieldRow('Composition (EN)', 'e-composition', p.composition) + fieldRow('Composition (PL)', 'e-composition_pl', p.composition_pl) + '</div>' +
+        '<div class="row-2">' + fieldRow('Care (EN)', 'e-care', p.care) + fieldRow('Care (PL)', 'e-care_pl', p.care_pl) + '</div>' +
+        '<div class="row-2">' + fieldRow('Details (EN)', 'e-details', p.details) + fieldRow('Details (PL)', 'e-details_pl', p.details_pl) + '</div>' +
+        '<div class="row-2">' + fieldRow('Extra images (0-3)', 'e-extra_count', p.extra_count == null ? 0 : p.extra_count) + fieldRow('Sort order', 'e-sort_order', p.sort_order == null ? 0 : p.sort_order) + '</div>' +
+        '<div class="checkbox-row"><input type="checkbox" id="e-has_back"' + (p.has_back ? ' checked' : '') + '/><label for="e-has_back">Has back view</label>' +
+        '<input type="checkbox" id="e-active" style="margin-left:16px;"' + (p.active !== false ? ' checked' : '') + '/><label for="e-active">Active</label></div>' +
+        '<button class="btn mini e-save">' + (isNew ? 'Create' : 'Save') + '</button> <span class="muted e-msg" style="margin-left:10px;font-size:12px;"></span>' +
+        '</div>';
+    }
+
+    function collectEditor(scope) {
+      function v(id) { var el = scope.querySelector('#' + id); return el ? el.value.trim() : undefined; }
+      var out = {
+        slug: v('e-slug'), name: v('e-name'), name_pl: v('e-name_pl') || null,
+        tagline: v('e-tagline') || null, tagline_pl: v('e-tagline_pl') || null,
+        price_eur: v('e-price_eur') ? parseInt(v('e-price_eur'), 10) : undefined,
+        price_pln: v('e-price_pln') ? parseInt(v('e-price_pln'), 10) : null,
+        category: v('e-category') || null, hs_code: v('e-hs_code') || null,
+        composition: v('e-composition') || null, composition_pl: v('e-composition_pl') || null,
+        care: v('e-care') || null, care_pl: v('e-care_pl') || null,
+        details: v('e-details') || null, details_pl: v('e-details_pl') || null,
+        extra_count: v('e-extra_count') ? parseInt(v('e-extra_count'), 10) : 0,
+        sort_order: v('e-sort_order') ? parseInt(v('e-sort_order'), 10) : 0,
+        has_back: scope.querySelector('#e-has_back').checked,
+        active: scope.querySelector('#e-active').checked,
+      };
+      try { out.sizes = JSON.parse(scope.querySelector('#e-sizes').value || '[]'); }
+      catch (e) { out.sizes = null; }
+      return out;
+    }
+
+    function wireEditor(scope, isNew, id) {
+      scope.querySelector('.e-save').addEventListener('click', async function () {
+        var msg = scope.querySelector('.e-msg'); msg.textContent = '';
+        var data = collectEditor(scope);
+        if (data.sizes === null) { msg.textContent = 'Sizes JSON is invalid'; return; }
+        var res;
+        if (isNew) {
+          var newId = (scope.querySelector('#e-id').value || '').trim();
+          if (!newId) { msg.textContent = 'ID required'; return; }
+          data.id = newId;
+          res = await api('admin-products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        } else {
+          res = await api('admin-products', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, updates: data }) });
+        }
+        if (res.ok) loadProductsAdmin(); else { var e = await res.json(); msg.textContent = e.error || 'Save failed'; }
+      });
+    }
+
+    // ── Customers ──
+    async function loadCustomers(search) {
+      var pane = document.querySelector('[data-tabpane="customers"]');
+      pane.innerHTML = '<div style="margin-bottom:14px;"><input type="text" id="cust-search" placeholder="Search name or email" style="max-width:320px;" value="' + esc(search || '') + '"/> <button class="btn btn-outline mini" id="cust-search-btn">Search</button></div><div id="cust-results"><p class="muted">Loading…</p></div>';
+      document.getElementById('cust-search-btn').addEventListener('click', function () { loadCustomers(document.getElementById('cust-search').value); });
+      document.getElementById('cust-search').addEventListener('keydown', function (e) { if (e.key === 'Enter') loadCustomers(this.value); });
+
+      var url = 'admin-customers?limit=100' + (search ? '&search=' + encodeURIComponent(search) : '');
+      var res = await api(url);
+      var box = document.getElementById('cust-results');
+      if (!res.ok) { box.innerHTML = '<p class="danger">Failed to load.</p>'; return; }
+      var d = await res.json();
+      var custs = d.customers || [];
+      if (!custs.length) { box.innerHTML = '<p class="muted">No customers.</p>'; return; }
+      box.innerHTML = '<div class="scroll-x"><table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Orders</th></tr></thead><tbody>' +
+        custs.map(function (c) {
+          return '<tr><td>' + esc(c.name || '') + '</td><td>' + esc(c.email || '') + '</td><td>' + esc(c.country || '') + '</td><td>' + (c.order_count || 0) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+
+    verify();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  command = "npm install"
+
+[build.processing]
+  skip_processing = true
+
+# DHL24 SOAP functions (when activated) load their WSDL from disk. Tell the
+# bundler to ship the .wsdl files alongside the function code.
+[functions]
+  included_files = ["netlify/functions/*.wsdl"]
+
+# Hourly scan for pending orders that never paid — one operator alert per
+# abandoned cart, deduped via orders.abandoned_alert_sent_at.
+[functions."abandoned-cart-alert"]
+  schedule = "@hourly"
