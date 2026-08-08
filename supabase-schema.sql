@@ -25,7 +25,13 @@ CREATE TABLE IF NOT EXISTS products (
   tagline_pl           TEXT,
   price_eur            INTEGER NOT NULL,          -- euro cents  (19500 = €195)
   price_pln            INTEGER,                   -- grosze      (85000 = 850 zł); NULL → price_eur × PLN_FALLBACK_RATE
-  category             TEXT,                      -- 'jacket' | 'pants' | 'jumper' | 'tshirt' | ...
+  category             TEXT,                      -- legacy single value (kept for back-compat)
+  -- Multi-valued shop taxonomy. Both are arrays of slugs; a product may carry
+  -- several of each. category slugs: coats-jackets, vests, shirts, pants,
+  -- dresses-skirts, jerseys, accessories, bags, masks.
+  -- material slugs: cotton, linen, hemp, blends, wool, silk.
+  categories           JSONB NOT NULL DEFAULT '[]'::jsonb,
+  materials            JSONB NOT NULL DEFAULT '[]'::jsonb,
   -- Per-product ordered size list. Each element: {"label": "<size>", "stock": <int>}
   -- Arbitrary labels: EU 46–56 (jackets), waist 30–38 (pants), S/M/L/XL (knitwear).
   sizes                JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -355,26 +361,40 @@ GRANT EXECUTE ON FUNCTION public.create_pending_order(
 --     Replace copy/prices/images via /admin.html. Prices: EUR cents +
 --     PLN grosze (round-number brand pricing, ≈ ×4.3 here as placeholder).
 -- ══════════════════════════════════════════════════════════════
-INSERT INTO products (id, slug, name, tagline, price_eur, price_pln, category, sizes, composition, care, details, hs_code, sort_order) VALUES
-('AA-JK-01', 'field-jacket',        'Waxed Field Jacket',      'Placeholder tagline.', 32000, 138000, 'jacket',
+INSERT INTO products (id, slug, name, tagline, price_eur, price_pln, category, categories, materials, sizes, composition, care, details, hs_code, sort_order) VALUES
+('AA-JK-01', 'field-jacket',        'Waxed Field Jacket',      'Placeholder tagline.', 32000, 138000, 'jacket', '["coats-jackets"]'::jsonb, '["cotton"]'::jsonb,
   '[{"label":"46","stock":3},{"label":"48","stock":5},{"label":"50","stock":5},{"label":"52","stock":4},{"label":"54","stock":2},{"label":"56","stock":1}]'::jsonb,
   '100% Waxed Cotton', 'Wipe clean with a damp cloth. Do not machine wash. Re-wax annually.', 'Placeholder details · Four-pocket · Corozo buttons', '6201.40', 10),
-('AA-JK-02', 'wool-overcoat',       'Wool Overcoat',           'Placeholder tagline.', 42000, 181000, 'jacket',
+('AA-JK-02', 'wool-overcoat',       'Wool Overcoat',           'Placeholder tagline.', 42000, 181000, 'jacket', '["coats-jackets"]'::jsonb, '["wool"]'::jsonb,
   '[{"label":"46","stock":2},{"label":"48","stock":4},{"label":"50","stock":4},{"label":"52","stock":3},{"label":"54","stock":2}]'::jsonb,
   '90% Wool / 10% Cashmere', 'Dry clean only. Brush after wear. Store on a wide hanger.', 'Placeholder details · Half-canvas · Horn buttons', '6201.11', 20),
-('AA-PT-01', 'pleated-trouser',     'Pleated Trouser',         'Placeholder tagline.', 18000, 78000, 'pants',
+('AA-PT-01', 'pleated-trouser',     'Pleated Trouser',         'Placeholder tagline.', 18000, 78000, 'pants', '["pants"]'::jsonb, '["cotton"]'::jsonb,
   '[{"label":"30","stock":4},{"label":"32","stock":6},{"label":"34","stock":6},{"label":"36","stock":4},{"label":"38","stock":2}]'::jsonb,
   '98% Cotton / 2% Elastane', 'Machine wash cold, inside out. Hang to dry. Warm iron.', 'Placeholder details · Single pleat · Unfinished hem', '6203.42', 30),
-('AA-PT-02', 'selvedge-jean',       'Selvedge Denim Jean',     'Placeholder tagline.', 16000, 69000, 'pants',
+('AA-PT-02', 'selvedge-jean',       'Selvedge Denim Jean',     'Placeholder tagline.', 16000, 69000, 'pants', '["pants"]'::jsonb, '["cotton"]'::jsonb,
   '[{"label":"30","stock":5},{"label":"32","stock":7},{"label":"34","stock":7},{"label":"36","stock":5},{"label":"38","stock":3}]'::jsonb,
   '100% Cotton Selvedge Denim', 'Wash sparingly, cold, inside out. Hang to dry.', 'Placeholder details · 13.5oz · Button fly', '6203.42', 40),
-('AA-JP-01', 'lambswool-jumper',    'Lambswool Crew Jumper',   'Placeholder tagline.', 14000, 60000, 'jumper',
+('AA-JP-01', 'lambswool-jumper',    'Lambswool Crew Jumper',   'Placeholder tagline.', 14000, 60000, 'jumper', '["jerseys"]'::jsonb, '["wool"]'::jsonb,
   '[{"label":"S","stock":6},{"label":"M","stock":8},{"label":"L","stock":8},{"label":"XL","stock":4}]'::jsonb,
   '100% Lambswool', 'Handwash cold with wool detergent. Lie flat to dry.', 'Placeholder details · Ribbed collar · Fully fashioned', '6110.11', 50),
-('AA-TS-01', 'heavy-cotton-tee',    'Heavyweight Cotton Tee',  'Placeholder tagline.',  6500,  28000, 'tshirt',
+('AA-TS-01', 'heavy-cotton-tee',    'Heavyweight Cotton Tee',  'Placeholder tagline.',  6500,  28000, 'tshirt', '["shirts"]'::jsonb, '["cotton"]'::jsonb,
   '[{"label":"S","stock":10},{"label":"M","stock":14},{"label":"L","stock":14},{"label":"XL","stock":8}]'::jsonb,
   '100% Organic Cotton', 'Machine wash cold. Tumble dry low.', 'Placeholder details · 240gsm · Tubular knit', '6109.10', 60)
 ON CONFLICT (id) DO NOTHING;
+
+-- ── Migration: multi-valued taxonomy (safe to re-run) ──────────────
+-- Adds the array columns on projects created before this change, then backfills
+-- the test SKUs (the seed above uses ON CONFLICT DO NOTHING so it never touches
+-- existing rows). Assigning to already-tagged rows is guarded so real edits stick.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS categories JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS materials  JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+UPDATE products SET categories = '["coats-jackets"]'::jsonb WHERE id IN ('AA-JK-01','AA-JK-02') AND categories = '[]'::jsonb;
+UPDATE products SET categories = '["pants"]'::jsonb         WHERE id IN ('AA-PT-01','AA-PT-02') AND categories = '[]'::jsonb;
+UPDATE products SET categories = '["jerseys"]'::jsonb       WHERE id = 'AA-JP-01' AND categories = '[]'::jsonb;
+UPDATE products SET categories = '["shirts"]'::jsonb        WHERE id = 'AA-TS-01' AND categories = '[]'::jsonb;
+UPDATE products SET materials  = '["cotton"]'::jsonb        WHERE id IN ('AA-JK-01','AA-PT-01','AA-PT-02','AA-TS-01') AND materials = '[]'::jsonb;
+UPDATE products SET materials  = '["wool"]'::jsonb          WHERE id IN ('AA-JK-02','AA-JP-01') AND materials = '[]'::jsonb;
 
 
 -- ══════════════════════════════════════════════════════════════

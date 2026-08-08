@@ -22,6 +22,10 @@
     .mini { font-size: 12px; padding: 6px 10px; }
     .danger { color: #a23; }
     input.cell, select.cell { padding: 6px 8px; font-size: 13px; }
+    .tag-field { display: block; margin-bottom: 10px; }
+    .tag-field > span { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .tag-grid { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .tag-check { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; text-transform: capitalize; }
   </style>
 </head>
 <body>
@@ -197,7 +201,7 @@
       var stock = (p.sizes || []).map(function (s) { return s.label + ':' + s.stock; }).join('  ');
       return '<div class="editor" data-pid="' + esc(p.id) + '" data-json="' + esc(JSON.stringify(p)) + '">' +
         '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
-        '<div><strong>' + esc(p.name) + '</strong> <span class="muted">' + esc(p.id) + ' · ' + esc(p.category || '') + '</span><br/>' +
+        '<div><strong>' + esc(p.name) + '</strong> <span class="muted">' + esc(p.id) + (Array.isArray(p.categories) && p.categories.length ? ' · ' + esc(p.categories.join(', ')) : (p.category ? ' · ' + esc(p.category) : '')) + '</span><br/>' +
         '<span class="muted" style="font-size:12px;">€' + (p.price_eur / 100) + (p.price_pln ? ' · ' + (p.price_pln / 100) + ' zł' : '') + ' · ' + esc(stock) + (p.active === false ? ' · INACTIVE' : '') + '</span></div>' +
         '<div><button class="btn btn-outline mini p-edit">Edit</button> <button class="link-btn danger p-del">Delete</button></div>' +
         '</div><div class="p-editor-box" data-open="0"></div></div>';
@@ -205,6 +209,23 @@
 
     function fieldRow(label, id, val, ph) {
       return '<label class="field"><span>' + label + '</span><input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '/></label>';
+    }
+
+    // Canonical shop taxonomy — keep in sync with TAXONOMY in app.js.
+    var CATEGORIES = ['coats-jackets','vests','shirts','pants','dresses-skirts','jerseys','accessories','bags','masks'];
+    var MATERIALS = ['cotton','linen','hemp','blends','wool','silk'];
+    function tagGroup(label, name, options, selected) {
+      var sel = Array.isArray(selected) ? selected : [];
+      var boxes = options.map(function (o) {
+        var id = 'e-' + name + '-' + o;
+        return '<label class="tag-check"><input type="checkbox" data-tag="' + name + '" value="' + o + '" id="' + id + '"' + (sel.indexOf(o) !== -1 ? ' checked' : '') + '/> ' + o + '</label>';
+      }).join('');
+      return '<div class="tag-field"><span>' + label + '</span><div class="tag-grid">' + boxes + '</div></div>';
+    }
+    function collectTags(scope, name) {
+      var out = [];
+      scope.querySelectorAll('input[data-tag="' + name + '"]:checked').forEach(function (el) { out.push(el.value); });
+      return out;
     }
 
     function productEditor(p, isNew) {
@@ -215,7 +236,9 @@
         '<div class="row-2">' + fieldRow('Name (EN)', 'e-name', p.name) + fieldRow('Name (PL)', 'e-name_pl', p.name_pl) + '</div>' +
         '<div class="row-2">' + fieldRow('Tagline (EN)', 'e-tagline', p.tagline) + fieldRow('Tagline (PL)', 'e-tagline_pl', p.tagline_pl) + '</div>' +
         '<div class="row-2">' + fieldRow('Price EUR (cents)', 'e-price_eur', p.price_eur) + fieldRow('Price PLN (grosze)', 'e-price_pln', p.price_pln) + '</div>' +
-        '<div class="row-2">' + fieldRow('Category', 'e-category', p.category) + fieldRow('HS code', 'e-hs_code', p.hs_code) + '</div>' +
+        tagGroup('Categories', 'categories', CATEGORIES, p.categories) +
+        tagGroup('Materials', 'materials', MATERIALS, p.materials) +
+        '<div class="row-2">' + fieldRow('HS code', 'e-hs_code', p.hs_code) + fieldRow('Legacy category (optional)', 'e-category', p.category) + '</div>' +
         '<label class="field"><span>Sizes (JSON: [{"label","stock"}])</span><textarea id="e-sizes">' + esc(sizesJson) + '</textarea></label>' +
         '<div class="row-2">' + fieldRow('Composition (EN)', 'e-composition', p.composition) + fieldRow('Composition (PL)', 'e-composition_pl', p.composition_pl) + '</div>' +
         '<div class="row-2">' + fieldRow('Care (EN)', 'e-care', p.care) + fieldRow('Care (PL)', 'e-care_pl', p.care_pl) + '</div>' +
@@ -235,6 +258,7 @@
         price_eur: v('e-price_eur') ? parseInt(v('e-price_eur'), 10) : undefined,
         price_pln: v('e-price_pln') ? parseInt(v('e-price_pln'), 10) : null,
         category: v('e-category') || null, hs_code: v('e-hs_code') || null,
+        categories: collectTags(scope, 'categories'), materials: collectTags(scope, 'materials'),
         composition: v('e-composition') || null, composition_pl: v('e-composition_pl') || null,
         care: v('e-care') || null, care_pl: v('e-care_pl') || null,
         details: v('e-details') || null, details_pl: v('e-details_pl') || null,

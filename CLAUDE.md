@@ -111,8 +111,26 @@ over the raw bundle).
   chips + Size/Description/Tag accordions with `*`⇄`×` markers + "Add to cart — {size}"
   → "Added" flash). Manifesto = 14 big-type principles, one per screen. Subscribe =
   newsletter surface.
+- **Shop mega-menu + filters:** SHOP in the nav opens a full-width two-column panel
+  (categories | materials) built by app.js from `TAXONOMY` (single source of truth;
+  keep `admin.html`'s `CATEGORIES`/`MATERIALS` in sync). Clicking a term filters the
+  shop grid. Both dimensions are **multi-valued** — products carry `categories`/`materials`
+  JSONB arrays, so one item can appear under several filters. Filter is single-select and
+  lives in the URL: `#shop`, `#shop/category/<slug>`, `#shop/material/<slug>` (shareable,
+  back-button-safe). `products.js` falls back to mapping the legacy `category` → a category
+  slug so live rows filter by category even before the migration runs; materials stay empty
+  until then. ⚠️ **Run the taxonomy migration in `supabase-schema.sql`** (the `ALTER … ADD
+  COLUMN IF NOT EXISTS categories/materials` + backfill block) in the Supabase SQL editor —
+  the admin category/material checkboxes and material filters need those columns.
 - **Cart** = slide-out drawer (+ overlay) opened by the nav Cart button / add-to-cart;
   mobile sticky bag bar. Bag page for the full view.
+- **Footer** = **locked white strip**, `position:fixed; bottom:0` so content (incl. the
+  full-bleed hero images) scrolls behind it; hidden only on product detail (PDP has its own
+  bottom card). Static on mobile (avoids the sticky bag bar). Links: HELP · LEGAL · INSTAGRAM
+  · TIKTOK (Subscribe/Manifesto live in the header only) + email/© row.
+- **Static pages** (account/legal/contact/checkout) use the shared `.page-title` class
+  (big bold Bau caps) instead of the old thin-serif inline headings; account.html now has
+  the footer too.
 - **Currency** toggle (EUR/PLN) lives in the **checkout** order-summary, not the nav.
 - Mobile-first responsive throughout.
 

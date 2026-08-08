@@ -85,13 +85,98 @@
     });
   }
 
+  // ── Shop taxonomy (single source of truth for the mega-menu + filter labels) ──
+  // Both dimensions are multi-valued: a product carries arrays of category and
+  // material slugs, so it can appear under several filters at once.
+  var TAXONOMY = {
+    category: [
+      { slug: 'coats-jackets',  en: 'Coats Jackets',  pl: 'Płaszcze Kurtki' },
+      { slug: 'vests',          en: 'Vests',          pl: 'Kamizelki' },
+      { slug: 'shirts',         en: 'Shirts',         pl: 'Koszule' },
+      { slug: 'pants',          en: 'Pants',          pl: 'Spodnie' },
+      { slug: 'dresses-skirts', en: 'Dresses Skirts', pl: 'Sukienki Spódnice' },
+      { slug: 'jerseys',        en: 'Jerseys',        pl: 'Swetry' },
+      { slug: 'accessories',    en: 'Accessories',    pl: 'Akcesoria' },
+      { slug: 'bags',           en: 'Bags',           pl: 'Torby' },
+      { slug: 'masks',          en: 'Masks',          pl: 'Maski' },
+    ],
+    material: [
+      { slug: 'cotton', en: 'Cotton', pl: 'Bawełna' },
+      { slug: 'linen',  en: 'Linen',  pl: 'Len' },
+      { slug: 'hemp',   en: 'Hemp',   pl: 'Konopie' },
+      { slug: 'blends', en: 'Blends', pl: 'Mieszanki' },
+      { slug: 'wool',   en: 'Wool',   pl: 'Wełna' },
+      { slug: 'silk',   en: 'Silk',   pl: 'Jedwab' },
+    ],
+  };
+  function taxLabel(type, slug) {
+    var lang = (typeof getLang === 'function') ? getLang() : 'en';
+    var list = TAXONOMY[type] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].slug === slug) return list[i][lang] || list[i].en;
+    return slug;
+  }
+  function isTaxSlug(type, slug) {
+    var list = TAXONOMY[type] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].slug === slug) return true;
+    return false;
+  }
+
+  // Active shop filter: null (all) or { type: 'category'|'material', value: <slug> }.
+  var _filter = null;
+  function productTags(p, type) {
+    var arr = type === 'material' ? p.materials : p.categories;
+    return Array.isArray(arr) ? arr : [];
+  }
+  function filteredProducts() {
+    if (!_filter) return products;
+    return products.filter(function (p) { return productTags(p, _filter.type).indexOf(_filter.value) !== -1; });
+  }
+
+  // ── Shop mega-menu ──
+  function renderShopMenu() {
+    ['category', 'material'].forEach(function (type) {
+      var col = document.getElementById('shop-menu-' + (type === 'category' ? 'categories' : 'materials'));
+      if (!col) return;
+      col.innerHTML = TAXONOMY[type].map(function (item) {
+        var active = _filter && _filter.type === type && _filter.value === item.slug;
+        return '<a href="/#shop/' + type + '/' + item.slug + '" data-shop-filter="' + type + '" data-shop-slug="' + item.slug + '"' +
+          (active ? ' class="active"' : '') + '>' + escHtml(item[langKey()] || item.en) + '</a>';
+      }).join('');
+    });
+    var va = document.querySelector('[data-shop-all]');
+    if (va) va.classList.toggle('active', !_filter);
+  }
+  function langKey() { return (typeof getLang === 'function') ? getLang() : 'en'; }
+
+  var _menuCloseTimer = null;
+  function openShopMenu() {
+    if (_menuCloseTimer) { clearTimeout(_menuCloseTimer); _menuCloseTimer = null; }
+    var m = document.getElementById('shop-menu'); if (!m) return;
+    renderShopMenu();
+    m.classList.add('open'); document.body.classList.add('menu-open');
+    var tr = document.getElementById('shop-trigger'); if (tr) tr.setAttribute('aria-expanded', 'true');
+  }
+  function closeShopMenu() {
+    var m = document.getElementById('shop-menu'); if (!m) return;
+    m.classList.remove('open'); document.body.classList.remove('menu-open');
+    var tr = document.getElementById('shop-trigger'); if (tr) tr.setAttribute('aria-expanded', 'false');
+  }
+  function toggleShopMenu() {
+    var m = document.getElementById('shop-menu');
+    if (m && m.classList.contains('open')) closeShopMenu(); else openShopMenu();
+  }
+
   // ── Shop grid ──
   function renderGrid() {
     var grid = document.getElementById('product-grid');
     if (!grid) return;
     if (!products.length) { grid.innerHTML = '<p class="muted" style="padding:24px;">' + t('loading') + '</p>'; return; }
-    setText('shop-count', products.length + ' ' + t('shop_objects'));
-    grid.innerHTML = products.map(function (p) {
+    var list = filteredProducts();
+    setText('shop-title', _filter ? taxLabel(_filter.type, _filter.value) : t('collection_heading'));
+    var clear = document.getElementById('shop-clear'); if (clear) clear.hidden = !_filter;
+    setText('shop-count', list.length + ' ' + t('shop_objects'));
+    if (!list.length) { grid.innerHTML = '<p class="muted" style="padding:24px var(--gutter);">' + t('shop_empty') + '</p>'; return; }
+    grid.innerHTML = list.map(function (p) {
       var soldOut = totalStock(p) <= 0;
       var hasBack = p.hasBack;
       return '' +
@@ -249,13 +334,24 @@
   function showPage(name) {
     document.querySelectorAll('[data-page]').forEach(function (el) { el.style.display = (el.getAttribute('data-page') === name) ? '' : 'none'; });
     document.body.classList.toggle('nav-blend', name === 'home');
-    document.body.classList.toggle('hide-footer', name === 'home' || name === 'detail');
+    document.body.classList.toggle('hide-footer', name === 'detail');
     if (typeof window.aaScrollTop === 'function') window.aaScrollTop(); else window.scrollTo(0, 0);
     if (name === 'bag') renderBag();
     if (name === 'shop') renderGrid();
     resize();
   }
-  function navigateTo(section) { if (history.pushState) history.pushState({}, '', section === 'home' ? '/' : '/#' + section); showPage(section); }
+  function navigateTo(section) {
+    if (section === 'shop') _filter = null;
+    if (history.pushState) history.pushState({}, '', section === 'home' ? '/' : '/#' + section);
+    showPage(section);
+  }
+  function navigateToShopFilter(type, value) {
+    _filter = (type && value) ? { type: type, value: value } : null;
+    var hash = _filter ? '/#shop/' + type + '/' + value : '/#shop';
+    if (history.pushState) history.pushState({}, '', hash);
+    closeShopMenu();
+    showPage('shop');
+  }
   function navigateToProduct(slug) {
     var p = findBySlug(slug); if (!p) return;
     if (history.pushState) history.pushState({}, '', '/products/' + slug);
@@ -264,8 +360,16 @@
   function handleRoute() {
     var m = window.location.pathname.match(/^\/products\/([^\/?#]+)/);
     if (m) { var p = findBySlug(decodeURIComponent(m[1])); if (p) { renderDetail(p); showPage('detail'); updateMeta(p); return; } }
-    var hash = (window.location.hash || '').replace('#', '');
-    if (['shop', 'manifesto', 'bag', 'subscribe'].indexOf(hash) !== -1) { showPage(hash); return; }
+    closeShopMenu();
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    var parts = hash.split('/');
+    var base = parts[0];
+    if (base === 'shop') {
+      var type = parts[1], slug = parts[2] ? decodeURIComponent(parts[2]) : '';
+      _filter = ((type === 'category' || type === 'material') && isTaxSlug(type, slug)) ? { type: type, value: slug } : null;
+      showPage('shop'); return;
+    }
+    if (['manifesto', 'bag', 'subscribe'].indexOf(base) !== -1) { showPage(base); return; }
     showPage('home');
   }
   function updateMeta(p) {
@@ -279,10 +383,43 @@
   function wireStorefront() {
     if (!document.getElementById('product-grid') && !document.getElementById('detail-page')) return;
     document.querySelectorAll('[data-nav]').forEach(function (a) {
+      if (a.id === 'shop-trigger') return; // handled below as the mega-menu trigger
       a.addEventListener('click', function (e) {
         var target = a.getAttribute('data-nav');
         if (['home', 'shop', 'manifesto', 'bag', 'subscribe'].indexOf(target) !== -1) { e.preventDefault(); navigateTo(target); }
       });
+    });
+
+    // ── Shop mega-menu wiring ──
+    var trig = document.getElementById('shop-trigger');
+    var menu = document.getElementById('shop-menu');
+    var canHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+    function scheduleMenuClose() { if (_menuCloseTimer) clearTimeout(_menuCloseTimer); _menuCloseTimer = setTimeout(closeShopMenu, 180); }
+    if (trig) {
+      trig.addEventListener('click', function (e) { e.preventDefault(); toggleShopMenu(); });
+      if (canHover) { trig.addEventListener('mouseenter', openShopMenu); trig.addEventListener('mouseleave', scheduleMenuClose); }
+    }
+    if (menu) {
+      if (canHover) {
+        menu.addEventListener('mouseenter', function () { if (_menuCloseTimer) { clearTimeout(_menuCloseTimer); _menuCloseTimer = null; } });
+        menu.addEventListener('mouseleave', scheduleMenuClose);
+      }
+      menu.addEventListener('click', function (e) {
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+        e.preventDefault();
+        if (a.hasAttribute('data-shop-all')) { navigateToShopFilter(null, null); return; }
+        var type = a.getAttribute('data-shop-filter'), slug = a.getAttribute('data-shop-slug');
+        if (type && slug) navigateToShopFilter(type, slug);
+      });
+    }
+    var sc = document.getElementById('shop-clear');
+    if (sc) sc.addEventListener('click', function (e) { e.preventDefault(); navigateToShopFilter(null, null); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeShopMenu(); });
+    document.addEventListener('click', function (e) {
+      if (!menu || !menu.classList.contains('open')) return;
+      if (menu.contains(e.target) || (trig && trig.contains(e.target))) return;
+      closeShopMenu();
     });
     var ob = document.getElementById('cart-open-btn'); if (ob) ob.addEventListener('click', openCart);
     var cb = document.getElementById('cart-close-btn'); if (cb) cb.addEventListener('click', closeCart);
@@ -306,7 +443,7 @@
     }
     document.addEventListener('cartchange', function () { updateHeader(); renderCartDrawer(); renderBag(); });
     document.addEventListener('currencychange', function () { updateHeader(); renderGrid(); renderCartDrawer(); renderBag(); rerenderDetailIfOpen(); });
-    document.addEventListener('langchange', function () { renderGrid(); renderCartDrawer(); renderBag(); rerenderDetailIfOpen(); });
+    document.addEventListener('langchange', function () { renderShopMenu(); renderGrid(); renderCartDrawer(); renderBag(); rerenderDetailIfOpen(); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

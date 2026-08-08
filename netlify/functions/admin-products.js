@@ -4,7 +4,7 @@ const { verifyAdminToken, corsHeaders, getSupabase } = require('./admin-utils');
 // ([{label,stock}, ...]); there are no fixed stock columns.
 const ALLOWED = [
   'slug', 'name', 'name_pl', 'tagline', 'tagline_pl',
-  'price_eur', 'price_pln', 'category', 'sizes',
+  'price_eur', 'price_pln', 'category', 'categories', 'materials', 'sizes',
   'composition', 'composition_pl', 'composition_lines', 'composition_lines_pl',
   'care', 'care_pl', 'details', 'details_pl',
   'has_back', 'extra_count', 'hs_code', 'sort_order', 'active',

@@ -23,7 +23,7 @@
   <nav class="site-nav">
     <div class="nav-group">
       <a href="/" data-nav="home" data-i18n="nav_visuals">Visuals</a>
-      <a href="/#shop" data-nav="shop" data-i18n="nav_shop">Shop</a>
+      <a href="/#shop" id="shop-trigger" data-nav="shop" aria-haspopup="true" aria-expanded="false" data-i18n="nav_shop">Shop</a>
       <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
     </div>
     <div class="nav-group">
@@ -33,6 +33,15 @@
       <span class="nav-toggle" aria-label="Language"><button data-lang-btn="en">EN</button><button data-lang-btn="pl">PL</button></span>
     </div>
   </nav>
+
+  <!-- ── Shop mega-menu (populated by app.js from the taxonomy) ── -->
+  <div id="shop-menu" class="shop-menu" aria-label="Shop categories">
+    <a class="shop-menu-view-all" href="/#shop" data-shop-all data-i18n="shop_view_all">View all</a>
+    <div class="shop-menu-cols">
+      <div class="shop-menu-col" id="shop-menu-categories"></div>
+      <div class="shop-menu-col" id="shop-menu-materials"></div>
+    </div>
+  </div>
 
   <main>
     <!-- ── Visuals (home) ── -->
@@ -48,7 +57,7 @@
     <!-- ── Shop ── -->
     <div data-page="shop" style="display:none;">
       <div class="shop">
-        <div class="shop-head"><span data-i18n="collection_heading">The collection</span><span id="shop-count"></span></div>
+        <div class="shop-head"><span id="shop-title" data-i18n="collection_heading">The collection</span><span class="shop-head-right"><a id="shop-clear" href="/#shop" hidden data-i18n="shop_clear">Clear ×</a><span id="shop-count"></span></span></div>
         <div class="shop-grid" id="product-grid"></div>
       </div>
     </div>
@@ -128,13 +137,11 @@
     </div>
   </main>
 
-  <!-- ── Footer (hidden on visuals + detail) ── -->
+  <!-- ── Footer (locked strip; hidden on product detail) ── -->
   <footer class="site-footer">
     <div class="footer-group">
       <a href="/contact.html" data-i18n="footer_help">Help</a>
-      <a href="/#manifesto" data-nav="manifesto" data-i18n="nav_manifesto">Manifesto</a>
       <a href="/legal.html" data-i18n="footer_legal">Legal</a>
-      <a href="/#subscribe" data-nav="subscribe" data-i18n="nav_subscribe">Subscribe</a>
       <a href="https://instagram.com" target="_blank" rel="noopener" data-i18n="footer_instagram">Instagram</a>
       <a href="https://tiktok.com" target="_blank" rel="noopener" data-i18n="footer_tiktok">TikTok</a>
     </div>

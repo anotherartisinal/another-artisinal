@@ -5,7 +5,7 @@ var _SUPABASE_ANON_KEY = (window.AA_CONFIG && window.AA_CONFIG.SUPABASE_ANON_KEY
 
 // Stale-while-revalidate cache. Bump the version suffix when the row map below
 // changes so cached entries from older schemas are dropped.
-var _PRODUCTS_CACHE_KEY = 'aa-products-cache-v1';
+var _PRODUCTS_CACHE_KEY = 'aa-products-cache-v2';
 var _PLN_FALLBACK_RATE = 4.30;
 
 // Synchronously hydrate `products` from localStorage so the grid can render
@@ -17,6 +17,17 @@ try {
     if (Array.isArray(_parsed) && _parsed.length > 0) products = _parsed;
   }
 } catch (e) { /* localStorage unavailable or corrupt — fall through to network load */ }
+
+// Coerce a JSONB tag array to a clean list of string slugs. `legacy` is the old
+// single-value column used as a fallback so rows predating the migration still filter.
+var _LEGACY_CAT_MAP = { jacket: 'coats-jackets', jumper: 'jerseys', tshirt: 'shirts', pants: 'pants' };
+function _normalizeTags(raw, legacy) {
+  if (Array.isArray(raw) && raw.length) {
+    return raw.filter(function (s) { return s != null && s !== ''; }).map(function (s) { return String(s); });
+  }
+  if (legacy) { var mapped = _LEGACY_CAT_MAP[legacy] || legacy; return [String(mapped)]; }
+  return [];
+}
 
 function _normalizeSizes(raw) {
   // Accept the JSONB array [{label, stock}] and coerce to a clean shape.
@@ -48,6 +59,8 @@ async function loadProducts() {
         tagline: r.tagline,
         taglinePl: r.tagline_pl || r.tagline,
         category: r.category || '',
+        categories: _normalizeTags(r.categories, r.category),
+        materials: _normalizeTags(r.materials, null),
         priceNum: priceNum,
         pricePlnNum: pricePlnNum,
         sizes: sizes,          // ordered [{label, stock}]

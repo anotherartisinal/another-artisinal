@@ -33,7 +33,7 @@
   <main class="wrap account-wrap">
     <!-- Sign-in -->
     <div id="signin-view">
-      <h1 style="font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 12px;" data-i18n="account_signin">Sign in</h1>
+      <h1 class="page-title" data-i18n="account_signin">Sign in</h1>
       <p class="muted" data-i18n="account_signin_intro">Enter your email and we will send you a sign-in link.</p>
       <div class="panel" style="margin-top:16px;max-width:420px;">
         <label class="field"><span data-i18n="checkout_email">Email</span><input type="email" id="signin-email" required /></label>
@@ -45,7 +45,7 @@
     <!-- Account -->
     <div id="account-view" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;">
-        <h1 style="font-family:var(--serif);font-weight:400;font-size:26px;margin:0;" data-i18n="account_title">Account</h1>
+        <h1 class="page-title" style="margin:0;" data-i18n="account_title">Account</h1>
         <button class="link-btn" id="signout-btn" data-i18n="account_signout">Sign out</button>
       </div>
       <p class="muted" id="account-email" style="margin-top:4px;"></p>
@@ -70,6 +70,19 @@
       </div>
     </div>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-group">
+      <a href="/contact.html" data-i18n="footer_help">Help</a>
+      <a href="/legal.html" data-i18n="footer_legal">Legal</a>
+      <a href="https://instagram.com" target="_blank" rel="noopener" data-i18n="footer_instagram">Instagram</a>
+      <a href="https://tiktok.com" target="_blank" rel="noopener" data-i18n="footer_tiktok">TikTok</a>
+    </div>
+    <div class="footer-group">
+      <a href="mailto:hello@anotherartisanal.eu">hello@anotherartisanal.eu</a>
+      <span>&copy; Another Artisanal</span>
+    </div>
+  </footer>
 
   <script src="/i18n.js"></script>
   <script src="/app.js"></script>

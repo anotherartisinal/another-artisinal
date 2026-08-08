@@ -56,11 +56,31 @@ body.nav-blend .site-nav { background: transparent; mix-blend-mode: difference; 
 .nav-toggle button.active { color: inherit; }
 body.nav-blend .nav-toggle button { color: var(--bg); opacity: 0.55; }
 body.nav-blend .nav-toggle button.active { opacity: 1; }
+/* When the mega-menu is open, force the nav solid even over photography. */
+body.menu-open .site-nav { background: var(--bg); mix-blend-mode: normal; color: var(--fg); }
+body.menu-open .nav-toggle button { color: var(--muted); opacity: 1; }
+body.menu-open .nav-toggle button.active { color: var(--fg); }
+
+/* ── SHOP MEGA-MENU ── */
+.shop-menu {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 55; display: none;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  padding: 78px var(--gutter) 44px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.shop-menu.open { display: block; }
+.shop-menu-view-all { display: inline-block; color: var(--fg); margin-bottom: 26px; }
+.shop-menu-view-all.active { text-decoration: underline; text-underline-offset: 4px; }
+.shop-menu-cols { display: flex; gap: 88px; }
+.shop-menu-col { display: flex; flex-direction: column; gap: 9px; }
+.shop-menu-col a { color: var(--fg); }
+.shop-menu-col a:hover { color: var(--muted); }
+.shop-menu-col a.active { text-decoration: underline; text-underline-offset: 4px; }
 
 /* ── VISUALS / HERO ── */
 .hero-stack { line-height: 0; }
 .hero-stack img { width: 100vw; height: 100vh; object-fit: cover; object-position: center; }
-.hero-cue { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; z-index: 40; display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bg); mix-blend-mode: difference; }
+.hero-cue { position: fixed; bottom: 78px; left: 0; right: 0; text-align: center; z-index: 40; display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bg); mix-blend-mode: difference; }
 body.hide-footer .site-footer { display: none; }
 
 /* ── SHOP GRID ── */
@@ -77,6 +97,9 @@ body.hide-footer .site-footer { display: none; }
 .shop-soldout { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(251,251,250,0.5); }
 .shop-soldout span { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; background: var(--bg); padding: 8px 16px; }
 .shop-head { padding: 0 var(--gutter) 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+.shop-head-right { display: inline-flex; gap: 16px; }
+#shop-clear { color: var(--fg); }
+#shop-clear:hover { color: var(--muted); }
 
 /* ── PRODUCT DETAIL (full-bleed + overlay card) ── */
 .pdp { position: relative; }
@@ -118,7 +141,8 @@ body.hide-footer .site-footer { display: none; }
 .manifesto-close { margin-top: 16vh; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); line-height: 1.7; max-width: 640px; }
 
 /* ── FOOTER ── */
-.site-footer { border-top: 1px solid var(--line); padding: 32px var(--gutter) 40px; display: flex; flex-direction: column; gap: 24px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+/* Locked strip: fixed at the bottom so content (incl. full-bleed images) scrolls behind it. */
+.site-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--line); padding: 16px var(--gutter); display: flex; flex-direction: column; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .site-footer a { color: var(--muted); }
 .site-footer a:hover { color: var(--fg); }
 .footer-group { display: flex; gap: 24px; flex-wrap: wrap; }
@@ -180,7 +204,9 @@ body.hide-footer .site-footer { display: none; }
 .bag-total-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-top: 1px solid var(--line); padding-top: 18px; margin-bottom: 8px; }
 .bag-shipping-note { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
 
-/* ── STATIC (subscribe / account / legal / contact) ── */
+/* ── STATIC (subscribe / account / legal / contact / checkout) ── */
+/* Shared editorial page title — big bold caps, matches the storefront voice. */
+.page-title { font-size: clamp(28px, 5vw, 48px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; line-height: 0.95; margin: 0 0 20px; }
 .static-page { max-width: 720px; margin: 0 auto; padding: 120px var(--gutter) 80px; }
 .static-page h1 { font-size: clamp(28px, 5vw, 56px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; line-height: 0.95; margin-bottom: 28px; }
 .static-page h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 36px 0 12px; }
@@ -239,6 +265,8 @@ footer:not(.site-footer) { display: flex; justify-content: space-between; align-
   .site-nav { flex-wrap: wrap; gap: 8px 16px; padding: 12px 16px; font-size: 11px; }
   .site-nav a, .site-nav button { font-size: 11px; }
   .site-nav .nav-group { gap: 14px; flex-wrap: wrap; }
+  .shop-menu { padding: 64px 16px 32px; font-size: 12px; }
+  .shop-menu-cols { gap: 40px; }
   .hero-stack img { height: 92vh; }
   .shop { padding: 84px 0 12vh; }
   .shop-grid { grid-template-columns: 1fr; gap: 2px; }
@@ -252,7 +280,7 @@ footer:not(.site-footer) { display: flex; justify-content: space-between; align-
   .row-2 { grid-template-columns: 1fr; }
   .newsletter-form { flex-direction: column; }
   .newsletter-btn { width: 100%; }
-  .site-footer { flex-direction: column; gap: 16px; }
+  .site-footer { position: static; flex-direction: column; gap: 16px; padding: 24px 16px 40px; }
   .footer-group:first-child { justify-content: flex-start; gap: 12px 20px; }
   #sticky-bag-bar.visible { display: flex; }
   body.has-sticky-bar .site-footer { padding-bottom: 80px; }
