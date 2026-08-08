@@ -103,9 +103,15 @@ over the raw bundle).
 - **Nav (all pages):** `VISUALS · SHOP · MANIFESTO` / `SUBSCRIBE · LOG IN · CART` + a
   **PL/EN** toggle only. No brand wordmark, no €/zł in nav. On the visuals page the nav
   is transparent + `mix-blend-mode:difference` over full-bleed photography; solid `#fbfbfa`
-  elsewhere (`body.nav-blend` toggled by app.js).
-- **Footer:** `HELP · MANIFESTO · LEGAL · SUBSCRIBE · INSTAGRAM · TIKTOK` + email + ©.
-  Hidden on visuals + product detail (`body.hide-footer`).
+  elsewhere (`body.nav-blend` toggled by app.js). On index, **SHOP is a mega-menu trigger**
+  (hover on desktop / tap on touch) opening the two-column category|material panel; while
+  open, `body.menu-open` forces the nav solid. On the static pages SHOP is a plain
+  `/#shop` link (no menu there).
+- **Footer:** **locked white strip** (`position:fixed; bottom:0`) so content — including the
+  full-bleed hero images — scrolls behind it. Links `HELP · LEGAL · INSTAGRAM · TIKTOK` +
+  email/© row (Subscribe & Manifesto live in the header only). Hidden only on product detail
+  (`body.hide-footer`; PDP has its own bottom card). Reverts to static in-flow on mobile
+  (so it doesn't collide with the sticky bag bar).
 - **Surfaces:** Visuals = full-bleed hero image scroll. Shop = edge-to-edge 3-col image
   grid (collapses 3→2→1). Product = full-bleed image(s) + **overlay info card** (size
   chips + Size/Description/Tag accordions with `*`⇄`×` markers + "Add to cart — {size}"
@@ -141,7 +147,12 @@ over the raw bundle).
 - **products** — `sizes` is a **JSONB ordered array** `[{"label","stock"}]` (arbitrary
   labels: EU 46–56 jackets, waist 30–38 pants, S–XL knitwear). Dual price
   `price_eur` (cents) + `price_pln` (grosze, nullable → `price_eur × 4.30`). Dual copy
-  `*` + `*_pl`. Plus `category`, `has_back`, `extra_count`, `hs_code`, `sort_order`, `active`.
+  `*` + `*_pl`. **Shop taxonomy** = two multi-valued JSONB arrays `categories` +
+  `materials` (slugs; a product may carry several of each — this is what the mega-menu
+  filters on). Legacy single `category` is kept for back-compat and as `products.js`'s
+  fallback. Plus `has_back`, `extra_count`, `hs_code`, `sort_order`, `active`. Taxonomy
+  columns + backfill were applied to the live DB (Aug 2026) via the migration block in
+  `supabase-schema.sql`.
 - **customers / orders / order_items** — RLS locked; anon has no table access; guest
   checkout writes go through 2 `SECURITY DEFINER` RPCs (`upsert_pending_customer`,
   `create_pending_order`). Auth users read own rows (email-bound). Functions use the
@@ -170,7 +181,9 @@ over the raw bundle).
 
 **Working & live:** storefront (visuals/shop/product/manifesto/bag/subscribe), Bau type,
 Lenis scroll, EN/PL, cart drawer, admin panel (`/admin.html`, log in with `ADMIN_PASSWORD`),
-newsletter, all Supabase-backed functions, mobile.
+newsletter, all Supabase-backed functions, mobile. **Shop mega-menu + category/material
+filtering** live end-to-end (taxonomy migration applied; 6 test SKUs tagged). Locked footer;
+restyled static pages (login/legal/contact/checkout).
 
 **Pending / next (nothing blocking):**
 1. **Real photography** — biggest item. Current imagery in `images/editorial/` +
@@ -178,7 +191,8 @@ newsletter, all Supabase-backed functions, mobile.
    reference lookbook) — **must be replaced with owned/licensed photos before real launch.**
    Product images are `/images/<product-id>-FRONT.jpg` (+ `-BACK.jpg`, `-BW1..3.jpg`).
 2. **Real products** — 6 placeholder SKUs seeded (AA-JK-01…AA-TS-01). Edit/replace via
-   `/admin.html` (create/edit/delete) or re-seed.
+   `/admin.html` (create/edit/delete) or re-seed. Tag each with its **categories/materials**
+   (checkbox groups in the editor) so it shows under the right shop filters.
 3. **Stripe** — no account yet. `create-payment-intent` returns 502 until `STRIPE_SECRET_KEY`
    is set (SDK throws at init with no key). Then set webhook + flip `config.js` pk.
 4. **Resend** — needs a verified sending domain; account/order emails inactive until
