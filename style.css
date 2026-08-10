@@ -80,7 +80,6 @@ body.menu-open .nav-toggle button.active { color: var(--fg); }
 /* ── VISUALS / HERO ── */
 .hero-stack { line-height: 0; }
 .hero-stack img { width: 100vw; height: 100vh; object-fit: cover; object-position: center; }
-.hero-cue { position: fixed; bottom: 78px; left: 0; right: 0; text-align: center; z-index: 40; display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bg); mix-blend-mode: difference; }
 body.hide-footer .site-footer { display: none; }
 
 /* ── SHOP GRID ── */
@@ -141,17 +140,13 @@ body.hide-footer .site-footer { display: none; }
 .manifesto-close { margin-top: 16vh; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); line-height: 1.7; max-width: 640px; }
 
 /* ── FOOTER ── */
-/* Locked strip: fixed at the bottom so content (incl. full-bleed images) scrolls behind it. */
-.site-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--line); padding: 16px var(--gutter); display: flex; flex-direction: column; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.site-footer a { color: var(--muted); }
-.site-footer a:hover { color: var(--fg); }
-.footer-group { display: flex; gap: 24px; flex-wrap: wrap; }
-/* Primary links row: solid black, spread edge-to-edge. */
-.footer-group:first-child { justify-content: space-between; gap: 16px 24px; }
-.footer-group:first-child a { color: var(--fg); }
-.footer-group:first-child a:hover { color: var(--muted); }
-/* Secondary row: email left, © right, quieter. */
-.footer-group:last-child { justify-content: space-between; align-items: baseline; font-size: 11px; }
+/* Locked strip: fixed at the bottom-left so content (incl. full-bleed images) scrolls behind it.
+   Width hugs the links (no `right: 0`) — the bar is only as wide as its content. */
+.site-footer { position: fixed; bottom: 0; left: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--line); border-right: 1px solid var(--line); padding: 16px var(--gutter); display: flex; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg); }
+.site-footer a { color: var(--fg); }
+.site-footer a:hover { color: var(--muted); }
+/* Links packed to the left, even gaps — never spread edge-to-edge. */
+.footer-group { display: flex; justify-content: flex-start; gap: 16px 24px; flex-wrap: wrap; }
 
 /* ── CART DRAWER ── */
 #cart-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.25); z-index: 200; }
@@ -280,8 +275,8 @@ footer:not(.site-footer) { display: flex; justify-content: space-between; align-
   .row-2 { grid-template-columns: 1fr; }
   .newsletter-form { flex-direction: column; }
   .newsletter-btn { width: 100%; }
-  .site-footer { position: static; flex-direction: column; gap: 16px; padding: 24px 16px 40px; }
-  .footer-group:first-child { justify-content: flex-start; gap: 12px 20px; }
+  .site-footer { position: static; border-right: 0; padding: 24px 16px 40px; }
+  .footer-group { gap: 12px 20px; }
   #sticky-bag-bar.visible { display: flex; }
   body.has-sticky-bar .site-footer { padding-bottom: 80px; }
 }

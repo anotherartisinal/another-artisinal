@@ -60,7 +60,8 @@ index.html      SPA: visuals(home) · shop · manifesto · product detail · bag
 checkout.html   Stripe Elements checkout (has the EUR/PLN toggle in its summary)
 account.html    magic-link sign-in + order history + saved address
 admin.html      unlinked admin (orders / products / customers, incl. create/edit/delete)
-contact.html · legal.html    static pages
+contact.html · legal.html · shipping.html   static pages (shipping = Packaging /
+                Shipping / Returns, mirrored from joshua-website's shipping page)
 config.js       PUBLIC client config: Supabase URL + anon key (set), Stripe pk (placeholder)
 products.js     Supabase fetch + stale-while-revalidate cache (maps JSONB sizes, *_pl)
 app.js          cart, currency, routing (/products/<slug>), all rendering, cart drawer
@@ -100,18 +101,22 @@ over the raw bundle).
 - **Smooth scroll:** Lenis 1.1.13 from unpkg (`scroll.js`), lerp 0.085, native touch
   momentum, **reduced-motion → engine off**. Never use CSS `scroll-behavior:smooth`.
   Call `window.lenisResize()` after layout shifts (routing/accordions/images) — app.js does.
-- **Nav (all pages):** `VISUALS · SHOP · MANIFESTO` / `SUBSCRIBE · LOG IN · CART` + a
-  **PL/EN** toggle only. No brand wordmark, no €/zł in nav. On the visuals page the nav
+- **Nav (all pages):** `SHOP · MANIFESTO` / `LOG IN · CART` + a
+  **PL/EN** toggle only. No brand wordmark, no €/zł in nav, **no Visuals or Subscribe link**
+  (home is reached via `/` or the logo-less nav; Subscribe moved to the footer). On the visuals page the nav
   is transparent + `mix-blend-mode:difference` over full-bleed photography; solid `#fbfbfa`
   elsewhere (`body.nav-blend` toggled by app.js). On index, **SHOP is a mega-menu trigger**
   (hover on desktop / tap on touch) opening the two-column category|material panel; while
   open, `body.menu-open` forces the nav solid. On the static pages SHOP is a plain
   `/#shop` link (no menu there).
-- **Footer:** **locked white strip** (`position:fixed; bottom:0`) so content — including the
-  full-bleed hero images — scrolls behind it. Links `HELP · LEGAL · INSTAGRAM · TIKTOK` +
-  email/© row (Subscribe & Manifesto live in the header only). Hidden only on product detail
-  (`body.hide-footer`; PDP has its own bottom card). Reverts to static in-flow on mobile
-  (so it doesn't collide with the sticky bag bar).
+- **Footer:** **locked white strip, bottom-LEFT** (`position:fixed; bottom:0; left:0`, **no
+  `right:0`**) so it hugs its links instead of spanning the viewport — content, including the
+  full-bleed hero images, scrolls behind and beside it. Single row, links packed **left**
+  (`justify-content:flex-start`, never `space-between`): `HELP · SHIPPING · SUBSCRIBE · LEGAL ·
+  INSTAGRAM · TIKTOK`. The email/© row and the home "Scroll" cue (`.hero-cue`) were deleted as
+  distractions. The bar auto-widens with longer labels (e.g. PL). Hidden only on product detail
+  (`body.hide-footer`; PDP has its own bottom card). Reverts to static in-flow, full-width on
+  mobile (so it doesn't collide with the sticky bag bar).
 - **Surfaces:** Visuals = full-bleed hero image scroll. Shop = edge-to-edge 3-col image
   grid (collapses 3→2→1). Product = full-bleed image(s) + **overlay info card** (size
   chips + Size/Description/Tag accordions with `*`⇄`×` markers + "Add to cart — {size}"
@@ -130,11 +135,7 @@ over the raw bundle).
   the admin category/material checkboxes and material filters need those columns.
 - **Cart** = slide-out drawer (+ overlay) opened by the nav Cart button / add-to-cart;
   mobile sticky bag bar. Bag page for the full view.
-- **Footer** = **locked white strip**, `position:fixed; bottom:0` so content (incl. the
-  full-bleed hero images) scrolls behind it; hidden only on product detail (PDP has its own
-  bottom card). Static on mobile (avoids the sticky bag bar). Links: HELP · LEGAL · INSTAGRAM
-  · TIKTOK (Subscribe/Manifesto live in the header only) + email/© row.
-- **Static pages** (account/legal/contact/checkout) use the shared `.page-title` class
+- **Static pages** (account/legal/contact/shipping/checkout) use the shared `.page-title` class
   (big bold Bau caps) instead of the old thin-serif inline headings; account.html now has
   the footer too.
 - **Currency** toggle (EUR/PLN) lives in the **checkout** order-summary, not the nav.
