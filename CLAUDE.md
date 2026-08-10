@@ -101,9 +101,11 @@ over the raw bundle).
 - **Smooth scroll:** Lenis 1.1.13 from unpkg (`scroll.js`), lerp 0.085, native touch
   momentum, **reduced-motion → engine off**. Never use CSS `scroll-behavior:smooth`.
   Call `window.lenisResize()` after layout shifts (routing/accordions/images) — app.js does.
-- **Nav (all pages):** `SHOP · MANIFESTO` / `LOG IN · CART` + a
-  **PL/EN** toggle only. No brand wordmark, no €/zł in nav, **no Visuals or Subscribe link**
-  (home is reached via `/` or the logo-less nav; Subscribe moved to the footer). On the visuals page the nav
+- **Nav (all pages):** `LOGO · SHOP · MANIFESTO` / `LOG IN · CART` + a
+  **PL/EN** toggle only. No €/zł in nav, **no Visuals or Subscribe link** (Subscribe moved to
+  the footer). `LOGO` is a **TEMP placeholder wordmark** (`.nav-logo`, plain text) that links
+  home — it's the only route back to the visuals page; replace with the real logo/SVG.
+  On the visuals page the nav
   is transparent + `mix-blend-mode:difference` over full-bleed photography; solid `#fbfbfa`
   elsewhere (`body.nav-blend` toggled by app.js). On index, **SHOP is a mega-menu trigger**
   (hover on desktop / tap on touch) opening the two-column category|material panel; while

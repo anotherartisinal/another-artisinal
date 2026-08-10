@@ -49,6 +49,8 @@ button { font-family: var(--font); cursor: pointer; }
   font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .site-nav .brand { letter-spacing: 0.1em; }
+/* TEMP placeholder wordmark — links home. Swap the text for the real logo/SVG. */
+.site-nav .nav-logo { font-size: 14px; font-weight: 800; letter-spacing: 0.12em; margin-right: 8px; }
 /* On the visuals/home page the nav floats over photography and inverts. */
 body.nav-blend .site-nav { background: transparent; mix-blend-mode: difference; color: var(--bg); }
 .nav-toggle { display: inline-flex; gap: 6px; }
