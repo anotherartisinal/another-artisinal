@@ -51,6 +51,15 @@ Headless render check (products need /products/* rewrite, so use a tiny rewrite 
 for PDP — see git history of this session). Chrome headless:
 `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless --dump-dom URL`.
 
+⚠️ **Mobile checks: don't trust `--window-size=390,844`** — macOS Chrome clamps the window to
+~500px, so you screenshot a ~500px layout cropped to 390 and everything looks broken. Instead
+drop a throwaway page in the repo root that hosts the site in an `<iframe width=390>` (same
+origin, so you can read `contentDocument`), then either screenshot it or `--dump-dom` measured
+values (`documentElement.scrollWidth` vs viewport width catches overflow; walk `body *` and
+report `getBoundingClientRect().right > W` to name the culprit). Delete the page before
+committing — the whole repo root is published. Transitions don't settle under
+`--virtual-time-budget`, so set `style.transition='none'` when asserting end states.
+
 ---
 
 ## Repo layout
@@ -142,6 +151,19 @@ over the raw bundle).
   the footer too.
 - **Currency** toggle (EUR/PLN) lives in the **checkout** order-summary, not the nav.
 - Mobile-first responsive throughout.
+- **Horizontal scroll is locked site-wide**: `html { overflow-x: clip }` + the same on `body`.
+  `clip` not `hidden` — `hidden` would make the root a scroll container and break
+  `position:fixed`/`sticky` and the Lenis lerp; and body-only is unreliable on iOS Safari.
+  ⚠️ If you ever add an *intentional* horizontal scroller (carousel, filmstrip), it must be a
+  child element with its own `overflow-x:auto` — don't unlock the root.
+- **Mobile header fits one row.** `.site-nav` is `flex-wrap:nowrap` under 768px with three
+  tightening tiers (≤768 → 10px/12px gaps, ≤400 → 9.5px/10px, ≤350 → 9px/8px) plus a smaller
+  `.nav-logo` and `white-space:nowrap` on the links. Verified one row at 320/360/390/414.
+  Before this it needed 447px of 390 and wrapped to two rows (68px tall vs ~38px now).
+  If you add a nav item, re-measure — the row has little slack left at 320.
+- **Closed cart drawer** is `visibility:hidden` (delayed 0.35s so the slide-out still animates)
+  as well as parked off-screen — keeps it out of the tab order so focus can't scroll the page
+  sideways. It was the main source of document overflow (sat at x=390–780 on a 390 viewport).
 
 ---
 
