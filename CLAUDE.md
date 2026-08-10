@@ -15,7 +15,8 @@ smooth-scroll** design (see "Design" below).
   Functions + Supabase + Stripe + Resend. Cloudflare for DNS (later).
 - **Currencies:** EUR (default) + PLN. **Languages:** EN (canonical) + PL.
 - **Fulfillment:** ships from Poland worldwide (shipping *structure* mirrors joshua;
-  carrier label functions not built — no carrier account yet).
+  carrier label functions not built — no carrier account yet). ⚠️ The times/packaging stated
+  on `/shipping.html` are **assumptions, not confirmed operations** — see pending #9.
 
 ## ⚠️ Accounts — use the NEW brand accounts, not personal
 
@@ -110,12 +111,14 @@ over the raw bundle).
 - **Smooth scroll:** Lenis 1.1.13 from unpkg (`scroll.js`), lerp 0.085, native touch
   momentum, **reduced-motion → engine off**. Never use CSS `scroll-behavior:smooth`.
   Call `window.lenisResize()` after layout shifts (routing/accordions/images) — app.js does.
-- **Nav (all pages):** `LOGO · SHOP · MANIFESTO` / `LOG IN · CART` + a
-  **PL/EN** toggle only. No €/zł in nav, **no Visuals or Subscribe link** (Subscribe moved to
-  the footer). `LOGO` is a **TEMP placeholder wordmark** (`.nav-logo`, plain text) that links
-  home — it's the only route back to the visuals page; replace with the real logo/SVG.
-  On the visuals page the nav
-  is transparent + `mix-blend-mode:difference` over full-bleed photography; solid `#fbfbfa`
+- **Nav (all pages):** `LOGO · SHOP · MANIFESTO` / `LOG IN · CART` + a **PL/EN** toggle only.
+  No €/zł in nav, **no Visuals or Subscribe link** (Visuals was dropped; Subscribe moved to the
+  footer). `LOGO` is a **TEMP placeholder wordmark** (`.nav-logo`, plain text, `style.css`) that
+  links home — since Visuals is gone it is the *only* route back to the visuals page, so don't
+  remove it without adding another; replace with the real logo/SVG when it exists. It routes via
+  `data-nav="home"` on index and a plain `href="/"` elsewhere.
+  On the visuals page the nav is transparent + `mix-blend-mode:difference` over full-bleed
+  photography; solid `#fbfbfa`
   elsewhere (`body.nav-blend` toggled by app.js). On index, **SHOP is a mega-menu trigger**
   (hover on desktop / tap on touch) opening the two-column category|material panel; while
   open, `body.menu-open` forces the nav solid. On the static pages SHOP is a plain
@@ -146,9 +149,10 @@ over the raw bundle).
   the admin category/material checkboxes and material filters need those columns.
 - **Cart** = slide-out drawer (+ overlay) opened by the nav Cart button / add-to-cart;
   mobile sticky bag bar. Bag page for the full view.
-- **Static pages** (account/legal/contact/shipping/checkout) use the shared `.page-title` class
-  (big bold Bau caps) instead of the old thin-serif inline headings; account.html now has
-  the footer too.
+- **Static pages** — two heading routes, both big bold Bau caps, don't mix them up:
+  account.html + checkout.html use `<h1 class="page-title">`; legal/contact/shipping wrap
+  content in `<main class="wrap static-page">` and get their size from `.static-page h1`.
+  Both replaced the old thin-serif inline headings. All of them carry the footer.
 - **Currency** toggle (EUR/PLN) lives in the **checkout** order-summary, not the nav.
 - Mobile-first responsive throughout.
 - **Horizontal scroll is locked site-wide**: `html { overflow-x: clip }` + the same on `body`.
@@ -210,6 +214,15 @@ newsletter, all Supabase-backed functions, mobile. **Shop mega-menu + category/m
 filtering** live end-to-end (taxonomy migration applied; 6 test SKUs tagged). Locked footer;
 restyled static pages (login/legal/contact/checkout).
 
+**Last session (10 Aug 2026) — nav/footer/mobile pass, all live:**
+- Removed the home "Scroll" cue and the footer email/© row.
+- Footer shrunk to a **bottom-left strip that hugs its links** (no `right:0`), links packed left.
+- New **`/shipping.html`** (Packaging / Shipping / Returns, EN+PL) linked from every footer.
+- Nav: dropped **Visuals** and **Subscribe** (Subscribe → footer); added the **temp `LOGO`**
+  wordmark linking home.
+- Mobile: header forced to **one row** at 320–414 (was wrapping to two); **horizontal scroll
+  locked** site-wide (`overflow-x:clip`); closed cart drawer now `visibility:hidden`.
+
 **Pending / next (nothing blocking):**
 1. **Real photography** — biggest item. Current imagery in `images/editorial/` +
    `images/AA-*-FRONT.jpg` are PLACEHOLDERS from the design hand-off (extracted from a
@@ -229,6 +242,13 @@ restyled static pages (login/legal/contact/checkout).
 8. **Shipping carrier functions** (InPost/DHL) — not built; checkout charges shipping +
    records the method; labels are manual until carrier accounts exist. Port from
    `joshua-website` when ready (schema already has the carrier pointer columns).
+9. **Confirm `/shipping.html` copy** — the packaging description (unbleached tissue, recycled
+   carton) and the times (1–2 day dispatch, 2–5 EU / 5–10 worldwide, 14-day returns,
+   customer-paid return shipping) are my **assumptions**, written to be plausible for a
+   Poland-based maker. Josh must confirm or correct before launch — it's a consumer-facing
+   promise. All of it is in `i18n.js` under `shipping_*` / `returns_*` (EN + PL), not in the HTML.
+10. **Replace the temp `LOGO` wordmark** with the real logo/SVG (`.nav-logo` in `style.css`;
+    the text `Logo` sits in every page's first `.nav-group`). Keep it linking home.
 
 ## Gotchas
 - Absolute resource paths only (`/style.css`, `/app.js`, `/images/…`) — the `/products/*`
